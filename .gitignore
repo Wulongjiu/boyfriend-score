@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 本地验证用的截图（由 scripts/measure-deployed.mjs 生成）
+/.preview-*.png
