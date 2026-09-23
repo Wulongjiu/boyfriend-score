@@ -10,6 +10,13 @@ import { DIMENSION_MAP } from '../../lib/model';
 import { encodeAnswers } from '../../lib/quiz';
 import { getAnswerIndex, isQuizComplete } from '../../lib/scoring';
 import { useQuizStore } from '../../lib/store';
+import {
+  finishQuestionTimer,
+  resetQuestionTimer,
+  resetTracking,
+  startQuestionTimer,
+  track,
+} from '../../lib/analytics';
 import type { Answers } from '../../lib/types';
 import { IconArrow, IconLock } from '../../components/icons';
 
@@ -60,6 +67,23 @@ export default function QuizPage() {
     };
   }, []);
 
+  /* ── 埋点：漏斗与计时 ──────────────────────────────────────────────
+   * 只看不改：埋点失败绝不能影响答题（track 内部已做静默处理）。 */
+  // 进入答题页 = 漏斗第二步
+  useEffect(() => {
+    track('start_quiz');
+  }, []);
+
+  // 每题开始展示时启动计时；切换题目会重开计时
+  useEffect(() => {
+    startQuestionTimer(current.id);
+  }, [current.id]);
+
+  // 离开答题页时若有未上报的计时，说明用户中途退出
+  useEffect(() => {
+    return () => resetQuestionTimer();
+  }, []);
+
   const goToResult = useCallback(
     (finalAnswers: Answers) => {
       const code = encodeAnswers(QUESTIONS, finalAnswers);
@@ -73,6 +97,15 @@ export default function QuizPage() {
       setNudge(false);
       const next: Answers = { ...(answers ?? {}), [current.id]: optionIndex };
       setAnswer(current.id, optionIndex);
+
+      // 埋点：上报该题停留时长（用于找"最难回答的题"）
+      const answeredNow = QUESTIONS.filter(
+        (q) => getAnswerIndex(next, q) !== undefined,
+      ).length;
+      finishQuestionTimer(answeredNow);
+      if (answeredNow >= TOTAL_QUESTIONS) {
+        track('quiz_complete', { answered: answeredNow });
+      }
 
       // 已全部答完：不自动跳题，把「看结果」的决定权交给用户
       if (isQuizComplete(next, QUESTIONS)) return;
@@ -120,6 +153,10 @@ export default function QuizPage() {
   }, [answers, goToResult]);
 
   const handleRestart = useCallback(() => {
+    // 埋点：重新开始（同时清空去重标记，让新一轮的 quiz_complete 能再次上报）
+    track('restart_quiz');
+    resetTracking();
+    resetQuestionTimer();
     reset();
     setIndex(0);
     setNudge(false);

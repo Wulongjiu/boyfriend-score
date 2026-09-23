@@ -6,6 +6,7 @@ import { COPY } from '../lib/copy';
 import { DIMENSIONS, RED_FLAGS } from '../lib/model';
 import { LEVELS } from '../lib/levels';
 import { IconAlert, IconArrow, IconChart, IconLock, IconTimer } from '../components/icons';
+import TrackOnMount from '../components/TrackOnMount';
 
 /**
  * 首页（服务端组件）—— 杂志专栏风
@@ -25,6 +26,9 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-md px-5 pb-16">
+      {/* 首页曝光（漏斗第一步） */}
+      <TrackOnMount event="view_home" />
+
       {/* ── 刊头 ───────────────────────────────────────────── */}
       <header className="pt-9">
         <div className="flex items-end justify-between">

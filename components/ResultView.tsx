@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { QUESTIONS, TOTAL_QUESTIONS } from '../content/questions';
 import { BRAND } from '../lib/brand';
@@ -10,6 +10,7 @@ import { getAdviceForDimensions } from '../lib/advice';
 import { DIMENSION_MAP } from '../lib/model';
 import { decodeAnswers } from '../lib/quiz';
 import { computeScore } from '../lib/scoring';
+import { track } from '../lib/analytics';
 import { downloadBlob, renderShareCard } from '../lib/share-card';
 import RadarChart from './RadarChart';
 import ScoreRing from './ScoreRing';
@@ -26,12 +27,26 @@ import { IconAlert, IconDownload, IconLink } from './icons';
 export default function ResultView({ code }: { code: string }) {
   const [cardState, setCardState] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
+  /** 已上报过 view_result 的 code：避免同一次访问重复计数 */
+  const trackedCode = useRef<string | null>(null);
 
   const result = useMemo(() => {
     const answers = decodeAnswers(QUESTIONS, code);
     if (!answers) return null;
     return computeScore(answers);
   }, [code]);
+
+  /* 埋点：结果页曝光（漏斗第四步），带分数与命中的原型 id */
+  useEffect(() => {
+    if (!result) return;
+    if (trackedCode.current === code) return;
+    trackedCode.current = code;
+    track('view_result', {
+      score: result.total,
+      isCapped: result.isCapped,
+      archetypeId: result.archetypes[0]?.archetype.id,
+    });
+  }, [code, result]);
 
   if (!result) return null;
 
@@ -56,6 +71,16 @@ export default function ResultView({ code }: { code: string }) {
       });
       downloadBlob(blob, `${BRAND.slug}-${result.total}.png`);
       setCardState('done');
+      // 埋点：分享率分子。用 beacon 确保下载触发的离开也能送达
+      track(
+        'save_card',
+        {
+          score: result.total,
+          isCapped: result.isCapped,
+          archetypeId: primary?.id,
+        },
+        { beacon: true },
+      );
     } catch {
       setCardState('error');
     }
@@ -66,6 +91,7 @@ export default function ResultView({ code }: { code: string }) {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      track('copy_link', { score: result.total }, { beacon: true });
     } catch {
       setCopied(false);
     }
