@@ -1,22 +1,87 @@
 @import "tailwindcss";
 
 /*
- * 设计约束（改动前请先读）：
- * 1. 强制浅色：分享卡片用 html-to-image 截图，若跟随系统深色模式会截出黑卡
- * 2. 字体：Geist 只覆盖拉丁字符，中文必须靠系统中文黑体兜底（卡片出图字体见 Day 12 计划）
+ * ============================================================================
+ * 「男友生存指数」设计系统 v2 —— 杂志专栏风（Editorial / Magazine）
+ * ============================================================================
+ *
+ * 视觉方向（Day 3 拍板）：杂志内页。
+ *   纸感奶油底 + 墨黑粗描边 + 单一高饱和玫瑰主色 + 超高对比大标题。
+ *   目标：截图发到小红书信息流里"一眼跳出来"。
+ *
+ * 设计约束（改动前必读）：
+ *  1. 强制浅色：分享卡片会被截图，跟随系统深色模式会截出黑卡。
+ *  2. 中文排版分工：
+ *     - 标题/数字 → 得意黑（Smiley Sans Oblique，OFL-1.1，已子集化到 98KB）
+ *       它只有斜体一个形态且汉字覆盖 8057，**禁止用于正文**。
+ *     - 正文 → 系统中文黑体（PingFang SC / 微软雅黑），保证可读性与不缺字。
+ *  3. 对比度：所有前景/背景组合必须 ≥ 4.5:1（小字）。改色请先跑
+ *     `npx vitest run` + Lighthouse accessibility，别凭感觉调。
  */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── 色彩令牌 ───────────────────────────────────────────────── */
+  --paper: #fffaf5;          /* 页面底色：奶油纸（比纯白更有温度） */
+  --paper-card: #ffffff;     /* 卡片底：纯白，与纸底形成层次 */
+  --ink: #12100e;            /* 墨黑：标题与描边（不用 #000，避免生硬） */
+  --ink-soft: #4a4441;       /* 次级文字 */
+  --ink-mute: #6f6864;       /* 三级文字（已按 4.5:1 校验） */
+
+  --rose: #c2003a;           /* 主色：深玫瑰红（比 e70044 更"印刷"） */
+  --rose-bright: #e70044;    /* 亮玫瑰：白字/白底均达 AA，大字号与色块用 */
+  --rose-tint: #ffe9ef;      /* 玫瑰浅底 */
+  --amber: #e8890c;          /* 强调色：暖橙。⚠ 仅作图形/底纹，禁止用于文字 */
+  --amber-tint: #fff2dd;     /* 暖橙浅底：其上文字必须用 --ink（实测 15:1） */
+
+  --line: #12100e;           /* 描边色：与墨黑一致，杂志风的关键 */
+
+  /* ── 形状令牌 ───────────────────────────────────────────────── */
+  --radius-card: 14px;       /* 比 v1 的圆角更"方正"，更印刷 */
+  --radius-pill: 999px;
+  --border-w: 2.5px;         /* 粗描边 */
+  --shadow-hard: 5px 5px 0 var(--ink);   /* 硬投影（非模糊阴影） */
+  --shadow-hard-sm: 3px 3px 0 var(--ink);
+
+  /* ── 语义令牌（Tailwind 用） ─────────────────────────────────── */
+  --background: var(--paper);
+  --foreground: var(--ink);
   color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-mute: var(--ink-mute);
+  --color-rose: var(--rose);
+  --color-rose-bright: var(--rose-bright);
+  --color-rose-tint: var(--rose-tint);
+  --color-amber: var(--amber);
+  --color-amber-tint: var(--amber-tint);
+
   --font-sans: var(--font-geist-sans), 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
   --font-mono: var(--font-geist-mono), 'SFMono-Regular', Consolas, monospace;
+  --font-display: 'Smiley Sans Display', var(--font-geist-sans), 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-sm: var(--shadow-hard-sm);
+}
+
+/**
+ * 标题字体：得意黑子集（仅含静态标题用到的 812 个字符，98KB）
+ * font-display: swap —— 字体没到位时用系统黑体显示，不阻塞渲染
+ */
+@font-face {
+  font-family: 'Smiley Sans Display';
+  src: url('/fonts/smiley-sans-display.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: oblique 0deg 12deg;
+  font-display: swap;
 }
 
 html {
@@ -28,4 +93,43 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── 杂志风工具类 ─────────────────────────────────────────────── */
+
+/** 标题字：得意黑 */
+.font-display {
+  font-family: var(--font-display);
+  font-style: normal; /* 得意黑自带倾斜，不要叠加 synthetic oblique */
+  letter-spacing: -0.01em;
+}
+
+/** 杂志卡片：粗描边 + 硬投影 + 方正圆角 */
+.card-editorial {
+  background: var(--paper-card);
+  border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+/** 大面积强调块 */
+.block-editorial {
+  border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hard);
+}
+
+/**
+ * 尊重"减少动效"偏好：所有过渡与动画在该偏好下失效。
+ * 无障碍要求，不可删除。
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

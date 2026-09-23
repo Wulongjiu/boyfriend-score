@@ -32,12 +32,14 @@ export const metadata: Metadata = {
  * viewportFit: 'cover' 是必需的——答题页用了 min-h-[100dvh] 与底部操作区，
  * 在 iPhone 刘海屏上不加这个会出现底部被安全区遮挡。
  * 不设置 maximumScale / userScalable：禁止缩放对无障碍不友好。
+ *
+ * themeColor 用奶油纸色，与杂志风底色一致。
  */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#fff7f7',
+  themeColor: '#fffaf5',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
@@ -46,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[#fff7f7]">{children}</body>
+      <body className="flex min-h-full flex-col bg-paper text-ink">{children}</body>
     </html>
   );
 }
