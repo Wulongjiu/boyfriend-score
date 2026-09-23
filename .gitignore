@@ -42,3 +42,6 @@ next-env.d.ts
 
 # 本地验证用的截图（由 scripts/measure-deployed.mjs 生成）
 /.preview-*.png
+
+# CI 工作流需要 gh 的 workflow scope，授权后再取消忽略
+/.github/workflows/

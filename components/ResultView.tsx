@@ -69,7 +69,7 @@ export default function ResultView({ code }: { code: string }) {
     <main className="mx-auto max-w-md px-5 pb-16 pt-10">
       {/* 分数 */}
       <section className="text-center">
-        <p className="text-xs font-medium tracking-widest text-rose-500">
+        <p className="text-xs font-medium tracking-widest text-rose-600">
           {COPY.result.scoreLabel}
         </p>
         <div className="mt-5">
@@ -103,13 +103,13 @@ export default function ResultView({ code }: { code: string }) {
       {redFlags.length > 0 && (
         <section className="mt-7 rounded-2xl border-2 border-rose-200 bg-rose-50/70 p-5">
           <h2 className="text-base font-bold text-rose-700">{COPY.result.redFlagTitle}</h2>
-          <p className="mt-1 text-xs text-rose-600/80">{COPY.result.redFlagSub}</p>
+          <p className="mt-1 text-xs text-rose-700">{COPY.result.redFlagSub}</p>
           <ul className="mt-4 space-y-4">
             {redFlags.map((flag) => (
               <li key={`${flag.questionId}-${flag.id}`}>
                 <p className="text-sm font-semibold text-rose-700">
                   {flag.title}
-                  <span className="ml-2 text-[11px] font-normal text-rose-500/80">
+                  <span className="ml-2 text-[11px] font-normal text-rose-700">
                     {COPY.result.redFlagQuestionPrefix}
                     {flag.questionId}
                     {COPY.result.redFlagQuestionSuffix}
@@ -154,7 +154,7 @@ export default function ResultView({ code }: { code: string }) {
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 tabular-nums text-sm text-neutral-500">
+                  <span className="shrink-0 tabular-nums text-sm text-neutral-600">
                     {Math.round(dim.score)}
                   </span>
                 </div>
@@ -164,7 +164,7 @@ export default function ResultView({ code }: { code: string }) {
                     style={{ width: `${dim.score}%` }}
                   />
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+                <p className="mt-2 text-xs leading-relaxed text-neutral-600">
                   {DIMENSION_MAP[dim.id].description}
                 </p>
               </div>
@@ -178,7 +178,7 @@ export default function ResultView({ code }: { code: string }) {
         <ul className="mt-4 space-y-3">
           {advice.map((item, i) => (
             <li key={item} className="flex gap-3 text-sm leading-relaxed text-neutral-600">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[11px] font-semibold text-rose-600">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[11px] font-semibold text-rose-700">
                 {i + 1}
               </span>
               <span>{item}</span>
@@ -190,7 +190,7 @@ export default function ResultView({ code }: { code: string }) {
       {/* 分享 */}
       <section className="mt-7 rounded-2xl bg-neutral-900 p-5 text-white">
         <h2 className="text-base font-semibold">{COPY.result.shareTitle}</h2>
-        <p className="mt-1 text-xs text-neutral-400">
+        <p className="mt-1 text-xs text-neutral-300">
           卡片只包含分数和称号，不会显示你选的任何一题。
         </p>
         <div className="mt-4 space-y-3">
@@ -226,12 +226,12 @@ export default function ResultView({ code }: { code: string }) {
         <Link href="/quiz" className="text-sm font-medium text-rose-600 underline">
           {COPY.result.restart}
         </Link>
-        <Link href="/" className="text-xs text-neutral-400">
+        <Link href="/" className="text-xs text-neutral-500">
           {COPY.result.backHome}
         </Link>
       </div>
 
-      <p className="mt-8 text-center text-[11px] leading-relaxed text-neutral-400">
+      <p className="mt-8 text-center text-[11px] leading-relaxed text-neutral-500">
         {COPY.result.disclaimer}
         <br />
         共 {TOTAL_QUESTIONS} 题 · {BRAND.signature}

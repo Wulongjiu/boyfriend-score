@@ -130,7 +130,7 @@ export default function QuizPage() {
   if (!ready) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-5">
-        <p className="text-sm text-neutral-400">{COPY.common.loading}</p>
+        <p className="text-sm text-neutral-500">{COPY.common.loading}</p>
       </main>
     );
   }
@@ -139,12 +139,12 @@ export default function QuizPage() {
     <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-8 pt-8">
       {/* 顶部进度 */}
       <header>
-        <div className="flex items-baseline justify-between text-[11px] text-neutral-400">
+        <div className="flex items-baseline justify-between text-[11px] text-neutral-500">
           <span>{COPY.quiz.progressLabel(index + 1, TOTAL_QUESTIONS)}</span>
           <button
             type="button"
             onClick={handleRestart}
-            className="text-neutral-400 underline decoration-dotted"
+            className="text-neutral-500 underline decoration-dotted"
           >
             {COPY.quiz.restartHint}
           </button>
@@ -155,10 +155,10 @@ export default function QuizPage() {
             style={{ width: `${(answeredCount / TOTAL_QUESTIONS) * 100}%` }}
           />
         </div>
-        <p className="mt-2 text-[11px] text-neutral-400">
+        <p className="mt-2 text-[11px] text-neutral-500">
           {COPY.quiz.subtitle}
           {answeredCount > 0 && answeredCount < TOTAL_QUESTIONS && (
-            <span className="ml-2 text-rose-400">
+            <span className="ml-2 text-rose-600">
               {COPY.quiz.resumeHint(answeredCount)}
             </span>
           )}
@@ -167,7 +167,7 @@ export default function QuizPage() {
 
       {/* 题目 */}
       <section className="mt-8 flex-1">
-        <p className="text-[11px] font-medium text-rose-400">
+        <p className="text-[11px] font-medium text-rose-600">
           {DIMENSION_MAP[current.dimension].label}
         </p>
         <h1 className="mt-2 text-xl font-bold leading-snug text-neutral-900">
@@ -193,7 +193,7 @@ export default function QuizPage() {
                     className={`mr-2.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
                       isSelected
                         ? 'bg-rose-500 text-white'
-                        : 'bg-neutral-100 text-neutral-500'
+                        : 'bg-neutral-100 text-neutral-600'
                     }`}
                   >
                     {'ABCD'[optionIndex]}
@@ -244,7 +244,7 @@ export default function QuizPage() {
           )}
         </div>
 
-        <p className="text-center text-[10px] text-neutral-300">
+        <p className="text-center text-[10px] text-neutral-500">
           {BRAND.name} · 答案只存在你的手机上
         </p>
       </footer>

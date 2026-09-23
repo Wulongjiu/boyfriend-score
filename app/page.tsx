@@ -20,13 +20,13 @@ export default function Home() {
     <main className="mx-auto max-w-md px-5 pb-16 pt-12">
       {/* 首屏 */}
       <section className="text-center">
-        <p className="text-[11px] font-medium tracking-widest text-rose-500">
+        <p className="text-[11px] font-medium tracking-widest text-rose-600">
           {COPY.home.eyebrow}
         </p>
         <h1 className="mt-4 text-[32px] font-extrabold leading-tight text-neutral-900">
           {COPY.home.h1}
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-neutral-500">{COPY.home.sub}</p>
+        <p className="mt-4 text-sm leading-relaxed text-neutral-600">{COPY.home.sub}</p>
 
         <Link
           href="/quiz"
@@ -34,7 +34,7 @@ export default function Home() {
         >
           {COPY.home.cta}
         </Link>
-        <p className="mt-2 text-[11px] text-neutral-400">{COPY.home.ctaSub}</p>
+        <p className="mt-2 text-[11px] text-neutral-500">{COPY.home.ctaSub}</p>
       </section>
 
       {/* 信任点 */}
@@ -46,19 +46,19 @@ export default function Home() {
           >
             <p className="text-lg">{item.icon}</p>
             <p className="mt-1 text-xs font-medium text-neutral-800">{item.title}</p>
-            <p className="mt-1 text-[10px] leading-snug text-neutral-400">{item.desc}</p>
+            <p className="mt-1 text-[10px] leading-snug text-neutral-500">{item.desc}</p>
           </div>
         ))}
       </section>
 
       {/* 结果预览 */}
       <section className="mt-9 rounded-2xl border border-rose-100 bg-rose-50/60 p-5">
-        <p className="text-xs font-medium text-rose-500">{COPY.home.mockTitle}</p>
+        <p className="text-xs font-medium text-rose-700">{COPY.home.mockTitle}</p>
         <div className="mt-4 flex items-end gap-4">
           <span className="text-5xl font-extrabold tabular-nums text-rose-600">82</span>
           <div className="pb-1">
             <p className="text-base font-bold text-neutral-800">及格线以上的甜</p>
-            <p className="text-xs text-neutral-500">有爱的底子，有几个地方值得聊聊</p>
+            <p className="text-xs text-neutral-600">有爱的底子，有几个地方值得聊聊</p>
           </div>
         </div>
         <ul className="mt-4 space-y-2">
@@ -68,7 +68,7 @@ export default function Home() {
             { label: '边界感与异性社交', score: 60 },
           ].map((item) => (
             <li key={item.label}>
-              <div className="flex items-baseline justify-between text-[11px] text-neutral-500">
+              <div className="flex items-baseline justify-between text-[11px] text-neutral-600">
                 <span>{item.label}</span>
                 <span className="tabular-nums">{item.score}</span>
               </div>
@@ -81,7 +81,7 @@ export default function Home() {
             </li>
           ))}
         </ul>
-        <p className="mt-4 text-[11px] text-neutral-400">{COPY.home.mockNote}</p>
+        <p className="mt-4 text-[11px] text-neutral-600">{COPY.home.mockNote}</p>
       </section>
 
       {/* 计分说明 */}
@@ -89,7 +89,7 @@ export default function Home() {
         <h2 className="text-base font-semibold text-neutral-800">
           {COPY.home.sections.howTitle}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+        <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {COPY.home.sections.howDesc}
         </p>
         <ul className="mt-4 space-y-2">
@@ -101,14 +101,14 @@ export default function Home() {
                 className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
               >
                 <span className="text-sm text-neutral-700">{dimension.label}</span>
-                <span className="shrink-0 text-[11px] text-neutral-400">
+                <span className="shrink-0 text-[11px] text-neutral-500">
                   {count} 题 · 权重 {dimension.weight}%
                 </span>
               </li>
             );
           })}
         </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
+        <p className="mt-3 text-[11px] leading-relaxed text-neutral-500">
           另有 {RED_FLAGS.length} 条红线：命中会让总分封顶，避免"他平时挺好"抵消掉冷暴力这类行为。
         </p>
       </section>
@@ -124,13 +124,13 @@ export default function Home() {
               key={level.id}
               className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 text-sm"
             >
-              <span className="w-14 shrink-0 tabular-nums text-[11px] text-neutral-400">
+              <span className="w-14 shrink-0 tabular-nums text-[11px] text-neutral-500">
                 {level.min}–
               </span>
               <span className="font-medium text-neutral-800 sm:w-36 sm:shrink-0">
                 {level.title}
               </span>
-              <span className="min-w-0 flex-1 text-[11px] text-neutral-500">
+              <span className="min-w-0 flex-1 text-[11px] text-neutral-600">
                 {level.oneLiner}
               </span>
             </li>
@@ -147,7 +147,7 @@ export default function Home() {
           {COPY.home.faq.map((item) => (
             <div key={item.q} className="rounded-xl border border-neutral-200 bg-white p-4">
               <p className="text-sm font-medium text-neutral-800">{item.q}</p>
-              <p className="mt-2 text-xs leading-relaxed text-neutral-500">{item.a}</p>
+              <p className="mt-2 text-xs leading-relaxed text-neutral-600">{item.a}</p>
             </div>
           ))}
         </div>
@@ -161,11 +161,11 @@ export default function Home() {
         >
           {COPY.home.finalCta}
         </Link>
-        <p className="mt-3 text-[11px] text-neutral-400">{COPY.home.footerNote}</p>
+        <p className="mt-3 text-[11px] text-neutral-500">{COPY.home.footerNote}</p>
       </section>
 
       <footer className="mt-10 border-t border-neutral-100 pt-6 text-center">
-        <p className="text-[11px] leading-relaxed text-neutral-400">
+        <p className="text-[11px] leading-relaxed text-neutral-500">
           {BRAND.disclaimer}
           <br />
           共 {TOTAL_QUESTIONS} 题 · {BRAND.signature}

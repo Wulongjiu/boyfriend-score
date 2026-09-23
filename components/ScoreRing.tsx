@@ -80,9 +80,9 @@ export default function ScoreRing({ score, size = 200, isCapped = false }: Score
         >
           {displayed}
         </span>
-        <span className="mt-1 text-xs text-neutral-400">满分 100</span>
+        <span className="mt-1 text-xs text-neutral-500">满分 100</span>
         {isCapped && (
-          <span className="mt-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-600">
+          <span className="mt-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
             命中红线封顶
           </span>
         )}

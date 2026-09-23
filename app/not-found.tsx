@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { COPY } from '../lib/copy';
 import { TOTAL_QUESTIONS } from '../content/questions';
@@ -7,6 +5,7 @@ import { TOTAL_QUESTIONS } from '../content/questions';
 /**
  * 全局 404 / 无效链接页
  * 结果页遇到非法 code 会调用 notFound()，渲染的就是这个页面。
+ * 注：404 页面不做任何跳转，因此这里不需要客户端能力，保持纯静态即可。
  */
 export default function NotFound() {
   return (
@@ -15,7 +14,7 @@ export default function NotFound() {
       <h1 className="mt-6 text-xl font-semibold text-neutral-800">
         {COPY.common.notFoundTitle}
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-neutral-500">
+      <p className="mt-3 text-sm leading-relaxed text-neutral-600">
         {COPY.common.notFoundDesc}
       </p>
       <Link
@@ -24,10 +23,10 @@ export default function NotFound() {
       >
         {COPY.common.notFoundCta}
       </Link>
-      <Link href="/" className="mt-4 text-sm text-neutral-400 underline">
+      <Link href="/" className="mt-4 text-sm text-neutral-500 underline">
         {COPY.result.backHome}
       </Link>
-      <p className="mt-10 text-xs text-neutral-400">
+      <p className="mt-10 text-xs text-neutral-500">
         共 {TOTAL_QUESTIONS} 道题 · 约 3 分钟
       </p>
     </main>
