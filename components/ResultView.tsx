@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { QUESTIONS, TOTAL_QUESTIONS } from '../content/questions';
@@ -10,7 +11,8 @@ import { getAdviceForDimensions } from '../lib/advice';
 import { DIMENSION_MAP } from '../lib/model';
 import { decodeAnswers } from '../lib/quiz';
 import { computeScore } from '../lib/scoring';
-import { track } from '../lib/analytics';
+import { resetQuestionTimer, resetTracking, track } from '../lib/analytics';
+import { useQuizStore } from '../lib/store';
 import { downloadBlob, renderShareCard } from '../lib/share-card';
 import RadarChart from './RadarChart';
 import ScoreRing from './ScoreRing';
@@ -47,6 +49,9 @@ export default function ResultView({ code }: { code: string }) {
   const trackedCode = useRef<string | null>(null);
   /** 用于计算滑动方向与位移 */
   const touch = useRef<{ x: number; y: number; at: number } | null>(null);
+  const router = useRouter();
+  /** 重新测一次时需要清空上一轮的答案 */
+  const { reset: resetAnswers } = useQuizStore();
 
   const result = useMemo(() => {
     const answers = decodeAnswers(QUESTIONS, code);
@@ -122,6 +127,23 @@ export default function ResultView({ code }: { code: string }) {
       setCopied(false);
     }
   };
+
+  /**
+   * 重新测一次
+   *
+   * ⚠️ 必须**先清空上一轮的答案**再跳转。这里踩过坑：原先只是 `<Link href="/quiz">`，
+   * 答案还在 localStorage 里，而答题页挂载时会「续答」跳到第一个未答题——
+   * 用户点"重新测一次"后看到的是上一轮已选过的选项，等于没重测。
+   *
+   * 同时清掉埋点的会话去重标记，让新一轮的 quiz_complete 能正常上报。
+   */
+  const handleRestart = useCallback(() => {
+    track('restart_quiz');
+    resetTracking();
+    resetQuestionTimer();
+    resetAnswers();
+    router.push('/quiz');
+  }, [resetAnswers, router]);
 
   /* 触摸滑动：横向位移大于纵向且超过阈值才翻页，避免与竖向滚动冲突 */
   const onTouchStart = (e: React.TouchEvent) => {
@@ -459,12 +481,13 @@ export default function ResultView({ code }: { code: string }) {
               分数只是把你在意的那些事排了个序，怎么用是你的决定。
             </p>
             <div className="mt-3.5 flex items-center gap-5">
-              <Link
-                href="/quiz"
+              <button
+                type="button"
+                onClick={handleRestart}
                 className="text-[13px] font-semibold text-rose underline decoration-2 underline-offset-4"
               >
                 {COPY.result.restart}
-              </Link>
+              </button>
               <Link href="/" className="text-[12px] text-ink-mute underline underline-offset-4">
                 {COPY.result.backHome}
               </Link>
@@ -541,12 +564,13 @@ export default function ResultView({ code }: { code: string }) {
           </button>
 
           {isLast ? (
-            <Link
-              href="/quiz"
+            <button
+              type="button"
+              onClick={handleRestart}
               className="flex h-11 flex-1 items-center justify-center border-2 border-ink bg-rose font-display text-lg text-white shadow-[4px_4px_0_var(--ink)] transition active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--ink)]"
             >
               {COPY.result.restart}
-            </Link>
+            </button>
           ) : (
             <button
               type="button"

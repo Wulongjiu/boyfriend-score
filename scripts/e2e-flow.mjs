@@ -318,7 +318,48 @@ if (downloaded) {
   record('分享卡片 PNG 生成成功', false, '未检测到下载文件');
 }
 
-/* ---------------- 5. 控制台错误 ---------------- */
+/* ---------------- 5. 「重新测一次」必须清空上一轮答案 ----------------
+ * 这里曾出过真实 bug：结果页的入口是普通链接，不清存储；而答题页挂载时
+ * 会"续答"跳到第一个未答题——用户点重新测一次，看到的是上一轮已选过的选项。
+ * 因此断言四项：存储为空、回到第 1 题、无选中项、无续答提示。 */
+const beforeRestart = await evalJs(`localStorage.getItem('bfsi:answers:v1')`);
+record('重测前确实存在已保存答案（前提成立）', beforeRestart !== null && beforeRestart !== '{}');
+
+const clickedRestart = await evalJs(`(() => {
+  const btn = [...document.querySelectorAll('button')].find(
+    (b) => b.textContent.trim() === '重新测一次',
+  );
+  if (!btn) return false;
+  btn.click();
+  return true;
+})()`);
+record('结果页存在「重新测一次」按钮', clickedRestart);
+
+const backToQuiz = await waitFor(`location.pathname === '/quiz'`, 10000);
+record('点击后回到答题页', backToQuiz, await evalJs('location.pathname'));
+await sleep(1200);
+
+const afterRestart = await evalJs(`(() => {
+  const stored = localStorage.getItem('bfsi:answers:v1');
+  const pageLabel = document.body.textContent.match(/(\\d+)\\s*\\/\\s*\\d+/)?.[1] ?? null;
+  const selected = [...document.querySelectorAll('[aria-pressed]')].filter(
+    (b) => b.getAttribute('aria-pressed') === 'true',
+  ).length;
+  return {
+    stored,
+    storedEmpty: stored === null || stored === '{}' || stored === '[]',
+    pageLabel,
+    selected,
+    resumeHint: /已答 \\d+ 题/.test(document.body.textContent),
+  };
+})()`);
+
+record('重测后存储已清空', afterRestart.storedEmpty, `stored=${afterRestart.stored}`);
+record('重测后回到第 1 题', afterRestart.pageLabel === '01', `页码 ${afterRestart.pageLabel}`);
+record('重测后没有任何选项处于选中态', afterRestart.selected === 0, `选中 ${afterRestart.selected} 个`);
+record('重测后不显示续答提示', afterRestart.resumeHint === false);
+
+/* ---------------- 6. 控制台错误 ---------------- */
 const errorEvents = root.events
   .filter((e) => e.method === 'Log.entryAdded' && e.params?.entry?.level === 'error')
   .map((e) => e.params.entry.text)
