@@ -103,7 +103,7 @@ async function shoot(name, url, { width = 390, height = 844, fullPage = true, se
 }
 
 // 结果页 code：第 5 题选第 3 项 → 命中"否定感受"红线 → 封顶 45
-const RED_FLAG_CODE = 'aaaacaaaaaaaaaaaaaaaaaaaaaa';
+const RED_FLAG_CODE = 'aaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
 console.log('生成截图:');
 await shoot('shot-1-home.png', `${BASE}/`);

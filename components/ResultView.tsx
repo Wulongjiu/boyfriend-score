@@ -35,8 +35,11 @@ export default function ResultView({ code }: { code: string }) {
 
   if (!result) return null;
 
-  const { level, redFlags, consistency } = result;
-  const advice = getAdviceForDimensions(result.weakestDimensions, 3);
+  const { level, redFlags, consistency, archetypes } = result;
+  // 主原型：结合多维度给出的具体处境解读
+  const primary = archetypes[0]?.archetype ?? null;
+  // 兜底建议：只在没有任何原型命中时使用（例如作答太少）
+  const fallbackAdvice = getAdviceForDimensions(result.weakestDimensions, 3);
   const lowest = result.weakestDimensions[0];
 
   const handleSaveCard = async () => {
@@ -45,8 +48,9 @@ export default function ResultView({ code }: { code: string }) {
       const siteLabel = typeof window !== 'undefined' ? window.location.host : BRAND.slug;
       const blob = await renderShareCard({
         score: result.total,
+        archetypeTitle: primary?.title ?? level.title,
+        oneLiner: primary?.oneLiner ?? level.oneLiner,
         levelTitle: level.title,
-        oneLiner: level.oneLiner,
         siteLabel,
         isCapped: result.isCapped,
       });
@@ -196,21 +200,117 @@ export default function ResultView({ code }: { code: string }) {
           })}
       </section>
 
-      {/* ── 建议 ───────────────────────────────────────────── */}
-      <section className="mt-8">
-        <h2 className="font-display text-2xl text-ink">{COPY.result.adviceTitle}</h2>
-        <div className="mt-2 h-[3px] w-14 bg-rose-bright" />
-        <ul className="mt-4 space-y-3">
-          {advice.map((item, i) => (
-            <li key={item} className="flex gap-3 border-2 border-ink bg-white px-4 py-3">
-              <span className="font-display mt-px shrink-0 text-lg leading-none text-rose">
-                {i + 1}
-              </span>
-              <span className="text-[12px] leading-relaxed text-ink-soft">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* ── 关系原型：本页的核心结论 ───────────────────────── */}
+      {primary ? (
+        <>
+          <section className="mt-8">
+            <h2 className="font-display text-2xl text-ink">你们更像哪一种</h2>
+            <div className="mt-2 h-[3px] w-14 bg-rose-bright" />
+
+            <div className="mt-4 border-2 border-ink bg-white">
+              {/* 原型标题：这是她要截图分享的那一句 */}
+              <div className="border-b-2 border-ink bg-rose-tint px-4 py-3.5">
+                <p className="font-display text-[26px] leading-tight text-ink">
+                  {primary.title}
+                </p>
+                <p className="mt-1.5 text-[12px] font-semibold text-rose">{primary.oneLiner}</p>
+              </div>
+
+              {/* 完整解读：多段，不压缩 */}
+              <div className="space-y-3 px-4 py-4">
+                {primary.reading.map((p, i) => (
+                  <p key={i} className="text-[13px] leading-[1.75] text-ink-soft">
+                    {p}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* 其他可能贴合的原型（帮她对号入座） */}
+          {archetypes.length > 1 && (
+            <section className="mt-4">
+              <p className="text-[11px] text-ink-mute">另外两种情况，你也可以对照看看：</p>
+              <ul className="mt-2 space-y-2">
+                {archetypes.slice(1).map(({ archetype }) => (
+                  <li key={archetype.id} className="border-2 border-ink bg-white px-4 py-3">
+                    <p className="text-[13px] font-semibold text-ink">{archetype.title}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-ink-mute">
+                      {archetype.oneLiner}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* 三个信号 */}
+          <section className="mt-8">
+            <h2 className="font-display text-2xl text-ink">可以留意的三个信号</h2>
+            <div className="mt-2 h-[3px] w-14 bg-rose-bright" />
+            <ul className="mt-4 border-2 border-ink bg-white">
+              {primary.signals.map((s, i) => (
+                <li
+                  key={s}
+                  className={`flex gap-3 px-4 py-3 ${i > 0 ? 'border-t-2 border-ink' : ''}`}
+                >
+                  <span className="font-display shrink-0 text-base leading-snug text-rose">
+                    {i + 1}
+                  </span>
+                  <span className="text-[12px] leading-relaxed text-ink-soft">{s}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* 正在消耗什么：情绪价值的核心，单独成块 */}
+          <section className="mt-6 border-2 border-ink bg-amber-tint px-4 py-4">
+            <p className="flex items-center gap-2 text-[13px] font-bold text-ink">
+              <IconAlert size={16} />
+              你正在消耗什么
+            </p>
+            <p className="mt-2 text-[12px] leading-[1.75] text-ink">{primary.drain}</p>
+          </section>
+
+          {/* 可以怎么做 */}
+          <section className="mt-8">
+            <h2 className="font-display text-2xl text-ink">接下来可以做的</h2>
+            <div className="mt-2 h-[3px] w-14 bg-rose-bright" />
+            <ul className="mt-4 space-y-3">
+              {primary.actions.map((item, i) => (
+                <li key={item} className="flex gap-3 border-2 border-ink bg-white px-4 py-3">
+                  <span className="font-display mt-px shrink-0 text-lg leading-none text-rose">
+                    {i + 1}
+                  </span>
+                  <span className="text-[12px] leading-relaxed text-ink-soft">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      ) : (
+        /* 兜底：作答太少或没有原型命中时，按最弱维度给通用建议 */
+        <section className="mt-8">
+          <h2 className="font-display text-2xl text-ink">{COPY.result.adviceTitle}</h2>
+          <div className="mt-2 h-[3px] w-14 bg-rose-bright" />
+          {fallbackAdvice.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {fallbackAdvice.map((item, i) => (
+                <li key={item} className="flex gap-3 border-2 border-ink bg-white px-4 py-3">
+                  <span className="font-display mt-px shrink-0 text-lg leading-none text-rose">
+                    {i + 1}
+                  </span>
+                  <span className="text-[12px] leading-relaxed text-ink-soft">{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 border-2 border-ink bg-white px-4 py-3 text-[12px] leading-relaxed text-ink-soft">
+              答的题还太少，暂时给不出针对性的解读。把剩下的题答完，结果会更准。
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── 分享 ───────────────────────────────────────────── */}
       <section className="mt-8">

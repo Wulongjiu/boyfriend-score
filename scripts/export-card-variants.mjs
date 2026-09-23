@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 const BASE = process.argv[2] ?? 'http://127.0.0.1:3222';
 const OUT_DIR = process.argv[3] ?? '.';
-const CODE = 'aaaacaaaaaaaaaaaaaaaaaaaaaa';
+const CODE = 'aaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const CDP_PORT = 9522;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

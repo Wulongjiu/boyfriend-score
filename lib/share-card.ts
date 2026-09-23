@@ -32,8 +32,12 @@ export const CARD_HEIGHT = 1440;
 
 export interface CardData {
   score: number;
-  levelTitle: string;
+  /** 关系原型标题：卡片上的主角，比等级称号更有分享欲 */
+  archetypeTitle: string;
+  /** 原型的"一句话"（分享卡片上的钩子） */
   oneLiner: string;
+  /** 等级称号，作为副信息保留 */
+  levelTitle: string;
   /** 站点短地址（仅用于展示） */
   siteLabel: string;
   /** 是否因命中红线被封顶 */
@@ -258,52 +262,68 @@ export async function renderShareCard(data: CardData): Promise<Blob> {
     y += 62;
   }
 
-  /* 称号：得意黑大字 */
-  y += 130;
+  /* 等级称号（副信息，小字） */
+  y += 76;
+  ctx.fillStyle = C.inkMute;
+  ctx.font = bodyFont(30, 500);
+  ctx.fillText(data.levelTitle, cx, y);
+
+  /* 关系原型标题（主角，得意黑大字，最多两行） */
+  y += 86;
   ctx.fillStyle = C.ink;
-  ctx.font = hasDisplayFont ? displayFont(88) : bodyFont(80, 800);
-  const titleLines = wrapText(ctx, data.levelTitle, cardW - 140);
-  for (const line of titleLines.slice(0, 2)) {
+  ctx.font = hasDisplayFont ? displayFont(74) : bodyFont(68, 800);
+  const titleLines = wrapText(ctx, data.archetypeTitle, cardW - 140).slice(0, 2);
+  for (const line of titleLines) {
     ctx.fillText(line, cx, y);
-    y += 104;
+    y += 88;
   }
 
   /* 玫瑰色短线：杂志式分隔 */
-  y += 24;
+  y += 16;
   ctx.fillStyle = C.roseBright;
   ctx.fillRect(cx - 60, y, 120, 8);
 
-  /* 一句话结论：正文用系统字体（得意黑汉字覆盖不足，不可用于长文本） */
-  y += 84;
+  /* 一句话钩子（正文用系统字体：得意黑汉字覆盖不足，不可用于长文本） */
+  y += 74;
   ctx.fillStyle = C.inkSoft;
-  ctx.font = bodyFont(42, 400);
+  ctx.font = bodyFont(40, 400);
   const quoteLines = wrapText(ctx, data.oneLiner, cardW - 180).slice(0, 3);
+  const quoteStart = y;
   for (const line of quoteLines) {
     ctx.fillText(line, cx, y);
-    y += 62;
+    y += 60;
   }
 
-  /* 底部区域 */
-  const footTop = cardY + cardH - 250;
+  /* ── 底部区域 ─────────────────────────────────────────────────────
+   * 关键：底部位置按**内容实际高度**与**固定页脚高度**推导，不能写死偏移。
+   * 原型标题最长两行、结论最长三行，内容高度是可变的；若底部写死，
+   * 长内容会与页脚重叠（实测出现过"结论压住引导语"）。 */
+  const FOOTER_H = 210;
+  const cardBottom = cardY + cardH;
+  const contentBottom = y - 60; // 最后一行基线之上
+  const footerTop = Math.max(contentBottom + 56, cardBottom - FOOTER_H);
 
   ctx.strokeStyle = '#e8e2dc';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(cardX + 120, footTop);
-  ctx.lineTo(cardX + cardW - 120, footTop);
+  ctx.moveTo(cardX + 120, footerTop);
+  ctx.lineTo(cardX + cardW - 120, footerTop);
   ctx.stroke();
 
   ctx.fillStyle = C.ink;
   ctx.font = hasDisplayFont ? displayFont(46) : bodyFont(42, 700);
-  ctx.fillText('你也来测测他', cx, footTop + 78);
+  ctx.fillText('你也来测测他', cx, footerTop + 78);
 
   ctx.fillStyle = C.rose;
   ctx.font = bodyFont(34, 600);
-  ctx.fillText(data.siteLabel, cx, footTop + 138);
+  ctx.fillText(data.siteLabel, cx, footerTop + 138);
 
   ctx.fillStyle = C.inkMute;
   ctx.font = bodyFont(26, 400);
-  ctx.fillText(BRAND.signature, cx, footTop + 192);
+  ctx.fillText(BRAND.signature, cx, footerTop + 192);
+
+  // 避免未使用变量告警：quoteStart 仅用于调试布局高度
+  void quoteStart;
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(

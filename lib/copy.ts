@@ -1,4 +1,5 @@
 import { BRAND } from './brand';
+import { TOTAL_QUESTIONS } from '../content/questions';
 
 /**
  * 全站文案集中管理
@@ -9,14 +10,14 @@ import { BRAND } from './brand';
  */
 export const COPY = {
   home: {
-    eyebrow: '27 道题 · 3 分钟 · 不用注册',
+    eyebrow: `${TOTAL_QUESTIONS} 道题 · 3 分钟 · 不用注册`,
     h1: '他能不能活下来，先测了再说。',
-    sub: '27 道关于他日常的选择题。答完你会得到一个分数、七个维度的拆解，和一句你早就知道、但一直没说出口的话。',
+    sub: `${TOTAL_QUESTIONS} 道关于他日常的选择题。答完你会得到一个分数、七个维度的拆解、一个属于你们的关系原型，和一句你早就知道、但一直没说出口的话。`,
     cta: '开始测测他',
     ctaSub: '不收集手机号，不保存你说过的话',
     trust: [
       { icon: '🔒', title: '不收集隐私', desc: '不需要注册登录，不存你的原始答案' },
-      { icon: '⏱', title: '3 分钟', desc: '27 道选择题，中途退出可以接着答' },
+      { icon: '⏱', title: '3 分钟', desc: `${TOTAL_QUESTIONS} 道选择题，中途退出可以接着答` },
       { icon: '📊', title: '有依据', desc: '7 个维度加权计分，不是随机出分' },
     ],
     mockTitle: '测完你会看到',
@@ -40,7 +41,7 @@ export const COPY = {
       },
       {
         q: '分数低说明该分手吗？',
-        a: '不说明。分数只反映你在这 27 个场景里的感受，它是一面镜子，不是一个判决。要不要继续，只有你能决定。',
+        a: `不说明。分数只反映你在这 ${TOTAL_QUESTIONS} 个场景里的感受，它是一面镜子，不是一个判决。要不要继续，只有你能决定。`,
       },
       {
         q: '为什么有"红线"这种设置？',

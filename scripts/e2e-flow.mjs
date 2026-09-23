@@ -1,10 +1,14 @@
 /**
  * 端到端流程验证（真实浏览器 + CDP，零依赖）
  *
- * 为什么不用 Playwright：本项目只需要"点完 27 题、看到结果、存出图片"这一条链路，
+ * 为什么不用 Playwright：本项目只需要"点完所有题 → 看到结果 → 存出卡片"这一条链路，
  * 用 Node 内置 WebSocket + CDP 已经够用，省掉 ~300MB 浏览器下载。
  *
- * 用法: node scripts/e2e-flow.mjs http://127.0.0.1:3210 [--red-flag]
+ * 用法:
+ *   node --experimental-strip-types scripts/e2e-flow.mjs <baseUrl> [--red-flag]
+ *   node --experimental-strip-types scripts/e2e-flow.mjs https://xxx.vercel.app
+ *
+ * ⚠️ 题量从 content/questions.ts 动态读取，不写死（v1 曾因硬编码 27 而失效）。
  */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -15,6 +19,9 @@ const BASE = process.argv[2] ?? 'http://127.0.0.1:3210';
 const HIT_RED_FLAG = process.argv.includes('--red-flag');
 const PORT = 9444;
 
+/** 题库题量（动态） */
+const { TOTAL_QUESTIONS } = await import('../content/questions.ts');
+
 const EDGE_CANDIDATES = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -24,7 +31,6 @@ if (!browserPath) throw new Error('未找到 Edge');
 
 const profileDir = mkdtempSync(join(tmpdir(), 'e2e-'));
 const downloadDir = mkdtempSync(join(tmpdir(), 'dl-'));
-
 const child = spawn(
   browserPath,
   [
@@ -40,8 +46,8 @@ const child = spawn(
 );
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const problems = [];
 const steps = [];
+const problems = [];
 function record(name, ok, detail = '') {
   steps.push({ name, ok, detail });
   if (!ok) problems.push(`${name}${detail ? ` — ${detail}` : ''}`);
@@ -93,7 +99,6 @@ await new Promise((resolve, reject) => {
   ws.addEventListener('error', reject);
 });
 const root = new Session(ws);
-
 const { targetId } = await root.send('Target.createTarget', { url: 'about:blank' });
 const { sessionId } = await root.send('Target.attachToTarget', { targetId, flatten: true });
 const send = (m, p) => root.send(m, p, sessionId);
@@ -138,83 +143,97 @@ await waitFor(`!!document.querySelector('h1')`);
 const home = await evalJs(`({
   h1: document.querySelector('h1')?.textContent?.trim(),
   ctaHref: [...document.querySelectorAll('a')].find(a => a.textContent.includes('开始测测他'))?.getAttribute('href'),
-  links: document.querySelectorAll('a[href="/quiz"]').length,
   overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-  darkBg: getComputedStyle(document.body).backgroundColor,
+  bodyBg: getComputedStyle(document.body).backgroundColor,
+  fontFamily: getComputedStyle(document.body).fontFamily,
 })`);
-record('首页渲染 H1', !!home.h1, home.h1 ?? '');
+record('首页渲染 H1', !!home.h1, String(home.h1 ?? '').slice(0, 30));
 record('首页有进入答题页的入口', home.ctaHref === '/quiz', String(home.ctaHref));
 record('首页无横向溢出', home.overflow === false);
+record(
+  '首页使用得意黑标题',
+  await evalJs(
+    `[...document.querySelectorAll('h1')].some(el => getComputedStyle(el).fontFamily.includes('Smiley'))`,
+  ),
+);
 
 /* ---------------- 2. 答题页 ---------------- */
 await evalJs(`document.querySelector('a[href="/quiz"]').click()`);
-const quizLoaded = await waitFor(`!!document.querySelector('[aria-pressed]')`);
-record('答题页加载出选项', quizLoaded);
+record('答题页加载出选项', await waitFor(`document.querySelectorAll('[aria-pressed]').length === 4`));
 
 const total = await evalJs(
-  // 杂志风改版后进度是页码式「01 / 27」（旧格式「第 1 / 27 题」已废弃）
   `(document.body.textContent.match(/\\d+\\s*\\/\\s*(\\d+)/)?.[1]) ?? null`,
 );
-record('识别题量', total === '27', `识别到 ${total}`);
+record('识别题量', total === String(TOTAL_QUESTIONS), `页面 ${total}，期望 ${TOTAL_QUESTIONS}`);
 
-// 逐题作答
 let answered = 0;
-for (let i = 0; i < 27; i += 1) {
-  const ok = await waitFor(`document.querySelectorAll('[aria-pressed]').length === 4`, 6000);
-  if (!ok) {
+for (let i = 0; i < TOTAL_QUESTIONS; i += 1) {
+  const ready = await waitFor(`document.querySelectorAll('[aria-pressed]').length === 4`, 6000);
+  if (!ready) {
     record(`第 ${i + 1} 题出现选项`, false);
     break;
   }
-  // 第 5 题选第 3 项（命中"否定感受"红线）；其余选第 1 项
-  const optionIndex = HIT_RED_FLAG && i === 4 ? 2 : 0;
+  // 命中红线模式：第 6 题选第 3 项；常规模式：一律选第 1 项
+  const optionIndex = HIT_RED_FLAG && i === 5 ? 2 : 0;
   await evalJs(`document.querySelectorAll('[aria-pressed]')[${optionIndex}].click()`);
   answered += 1;
-  await sleep(320);
+  await sleep(300);
 }
-record('完成 27 题作答', answered === 27, `实际作答 ${answered} 题`);
+record(`完成 ${TOTAL_QUESTIONS} 题作答`, answered === TOTAL_QUESTIONS, `实际 ${answered} 题`);
 
-/* ---------------- 结果页 ---------------- */
+/* ---------------- 3. 结果页 ---------------- */
 const resultBtn = await waitFor(
   `[...document.querySelectorAll('button')].some(b => b.textContent.includes('看结果'))`,
   6000,
 );
 record('出现「看结果」按钮', resultBtn);
 if (resultBtn) {
-  await evalJs(`[...document.querySelectorAll('button')].find(b => b.textContent.includes('看结果')).click()`);
+  await evalJs(
+    `[...document.querySelectorAll('button')].find(b => b.textContent.includes('看结果')).click()`,
+  );
 }
 const onResult = await waitFor(`location.pathname.startsWith('/r/')`, 10000);
 record('跳转到结果页 /r/[code]', onResult, await evalJs('location.pathname'));
 
 await waitFor(`!!document.querySelector('svg polygon')`, 8000);
-// 等分数滚动动画结束（ScoreRing 动画 900ms）
-await sleep(1400);
+await sleep(1400); // 等分数滚动动画结束
+
 const result = await evalJs(`(() => {
   const scoreEl = document.querySelector('[aria-label^="得分"]');
-  const score = scoreEl ? Number(scoreEl.textContent.trim()) : null;
   const code = location.pathname.split('/').pop();
+  const text = document.body.textContent;
   return {
     code,
-    codeValid: /^[a-d-]{27}$/.test(code),
-    score,
-    scoreRingFinal: scoreEl?.getAttribute('aria-label'),
+    codeValid: /^[a-d-]+$/.test(code) && code.length === ${TOTAL_QUESTIONS},
+    codeLength: code.length,
+    score: scoreEl ? Number(scoreEl.textContent.trim()) : null,
     radarPolygons: document.querySelectorAll('svg polygon').length,
-    dimensionRows: [...document.querySelectorAll('span')].filter(s => /情绪价值与沟通|边界感与异性社交/.test(s.textContent)).length,
     levelText: document.querySelector('h1')?.textContent?.trim(),
-    redFlagShown: document.body.textContent.includes('值得你认真看一眼'),
-    cappedShown: document.body.textContent.includes('封顶'),
-    adviceShown: document.body.textContent.includes('接下来可以做的'),
+    archetypeSection: text.includes('你们更像哪一种'),
+    signalsSection: text.includes('可以留意的三个信号'),
+    drainSection: text.includes('你正在消耗什么'),
+    actionsSection: text.includes('接下来可以做的'),
+    redFlagShown: text.includes('值得你认真看一眼'),
+    cappedShown: text.includes('封顶'),
     shareButtons: [...document.querySelectorAll('button')].map(b => b.textContent.trim()).filter(t => /保存分享卡片|复制结果链接/.test(t)),
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    disclaimer: document.body.textContent.includes('娱乐向内容'),
+    disclaimer: text.includes('娱乐向内容'),
+    readingChars: (() => {
+      const sec = [...document.querySelectorAll('section')].find(s => s.textContent.includes('你们更像哪一种'));
+      return sec ? sec.textContent.length : 0;
+    })(),
   };
 })()`);
 
-record('URL code 为 27 位合法字符', result.codeValid, String(result.code));
+record(`URL code 为 ${TOTAL_QUESTIONS} 位合法字符`, result.codeValid, `${result.codeLength} 位`);
 record('结果页显示分数', typeof result.score === 'number' && result.score >= 0 && result.score <= 100, `分数 ${result.score}`);
-// 雷达图 = 5 层网格多边形 + 1 个数据多边形
 record('雷达图渲染', result.radarPolygons >= 6, `${result.radarPolygons} 个多边形`);
-record('维度与等级渲染', !!result.levelText, String(result.levelText));
-record('建议区渲染', result.adviceShown === true);
+record('等级称号渲染', !!result.levelText, String(result.levelText));
+record('关系原型区块存在', result.archetypeSection === true);
+record('原型解读有实质内容', result.readingChars > 200, `${result.readingChars} 字`);
+record('三个信号区块存在', result.signalsSection === true);
+record('消耗点区块存在', result.drainSection === true);
+record('行动建议区块存在', result.actionsSection === true);
 record('分享按钮存在', result.shareButtons.length === 2, result.shareButtons.join(' / '));
 record('结果页无横向溢出', result.overflow === false);
 record('免责声明存在', result.disclaimer === true);
@@ -224,7 +243,6 @@ if (HIT_RED_FLAG) {
 }
 
 /* ---------------- 4. 分享卡片生成 ---------------- */
-// 直接点按钮，验证 Canvas 出图是否成功（下载文件出现在 downloadDir）
 await evalJs(
   `[...document.querySelectorAll('button')].find(b => b.textContent.includes('保存分享卡片'))?.click()`,
 );
@@ -242,17 +260,14 @@ const downloaded = await (async () => {
 if (downloaded) {
   record('分享卡片 PNG 生成成功', downloaded.size > 5000, `${downloaded.name} · ${(downloaded.size / 1024).toFixed(0)} KB`);
 } else {
-  const btnText = await evalJs(
-    `[...document.querySelectorAll('button')].map(b => b.textContent.trim()).join(' | ')`,
-  );
-  record('分享卡片 PNG 生成成功', false, `未检测到下载文件；按钮状态: ${btnText}`);
+  record('分享卡片 PNG 生成成功', false, '未检测到下载文件');
 }
 
 /* ---------------- 5. 控制台错误 ---------------- */
 const errorEvents = root.events
   .filter((e) => e.method === 'Log.entryAdded' && e.params?.entry?.level === 'error')
   .map((e) => e.params.entry.text)
-  // HMR WebSocket 在无头测试环境里可能连不上，属于测试环境噪声，不是应用缺陷
+  // HMR WebSocket 在无头测试环境可能连不上，属测试环境噪声，不是应用缺陷
   .filter((t) => !/favicon|React DevTools|_next\/hmr|WebSocket connection/i.test(t));
 record('无控制台错误', errorEvents.length === 0, errorEvents.slice(0, 3).join(' | '));
 
@@ -261,9 +276,7 @@ console.log('\n===== 端到端验证结果 =====');
 for (const s of steps) {
   console.log(`${s.ok ? '  ✓' : '  ✗'} ${s.name}${s.detail ? `  (${s.detail})` : ''}`);
 }
-console.log(
-  `\n通过 ${steps.filter((s) => s.ok).length}/${steps.length}`,
-);
+console.log(`\n通过 ${steps.filter((s) => s.ok).length}/${steps.length}`);
 if (problems.length) {
   console.log('\n失败项:');
   for (const p of problems) console.log(`  - ${p}`);
