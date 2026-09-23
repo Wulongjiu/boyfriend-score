@@ -1,72 +1,103 @@
 # 男友生存指数 · bf-survival-index
 
-> 3 分钟，回答 27 道关于他的日常，看看他能不能活下来。
+> 3 分钟，回答 36 道关于他的日常，看看他能不能活下来。
 
 面向小红书年轻女性的娱乐向测评网页。技术栈：Next.js 16（App Router）+ TypeScript + Tailwind CSS 4 + Vitest。
 
-**已拍板的产品决策**（详见 `docs/POSITIONING.md` §8）：命名「男友生存指数」· 27 题全上 · 红牌命中总分封顶 45 · 分享以 PNG 卡片为主 + 极简分数链（链接只显示分数与称号，7 天过期，`noindex`）。
+## 测评内核 v2（2026-09 重构）
 
-## 当前进度
+| 层 | 说明 |
+|---|---|
+| **量表** | 36 题，7 维度加权。单题可同时贡献 2–3 个维度（平均 1.43） |
+| **7 维度** | 情感回应性 22% / 冲突修复力 16% / 言行一致 14% / 边界与安全感 14% / 负荷分担 14% / 未来与承诺 12% / 社会融合 8% |
+| **理论依据** | 主轴：感知伴侣回应性（Reis & Shaver 人际亲密过程模型：被理解/被认可/被在乎）；冲突：Gottman 四骑士；负荷：家务与心理负荷研究 |
+| **关系原型** | 13 个多维度组合原型，每个含 3 段解读 + 3 个信号 + 消耗点 + 3 条行动。结果页核心结论 |
+| **等级** | 6 档，仅作总分定调；具体建议下沉到原型 |
+| **红牌** | 5 条（筑墙/鄙视/否定感受/边界倒打一耙/迁怒失控），命中则总分封顶 45 |
 
-| 阶段 | 状态 | 说明 |
-|---|---|---|
-| **Day 1 · P0 定位与测评模型** | ✅ 完成 | 定位文档、七维模型、27 题题库、6 档文案、计分纯函数 + 46 个单测 |
-| Day 2–5 · 工程骨架与部署 | ⏳ | Vercel 空壳上线 |
-| Day 5–14 · 核心功能 | ⏳ | 首页 / 答题 / 结果 / 分享图 / 存储 / 埋点 |
+### 三个被修复的设计缺陷
+
+1. **指向性**：v1 有 35/36 题的最优选项都在 A 位，用户能猜出规律。
+   → 选项顺序在生成题库时打乱并固化，分布 A/B/C/D = 14/7/8/7；选项只写行为事实、不写优劣；加入权衡型选项。
+2. **一问一维度**：v1 等于 7 个独立小测拼接，测不出关系模式。
+   → 单题多维度加权，31/36 题含多维贡献。
+3. **结论单薄**：v1 每档只有一两句话。
+   → 原型给出多维度组合解读，先接住情绪再讲事实。
+
+### 分数量表校准
+
+多维度加权导致两道边界都不可达（实测：上限 99.15、下限 5.63），
+因此计分时线性映射 `[5.63, 99.15] → [0, 100]`，否则"满分 100"与"0 分"都不可能出现。
+
+⚠️ **改动题库后必须重新校准**：
+
+```bash
+node --experimental-strip-types scripts/find-score-ceiling.mjs   # 更新 SCORE_CEILING
+node --experimental-strip-types scripts/find-score-floor.mjs     # 更新 SCORE_FLOOR
+```
+
+### 题库的两层结构（重要）
+
+```
+content/questions.canonical.ts   人工维护：选项按语义顺序写，便于审校
+        ↓  scripts/generate-questions.mjs --write
+content/questions.ts             应用使用：选项顺序已打乱并固化
+```
+
+**为什么必须固化而不是运行时打乱**：答案按展示位置（选项下标）存进 URL code，
+若运行时打乱而计分按源顺序读取，分数会整体错位。固化后全链路只有一套顺序。
 
 ## 目录结构
 
 ```
-app/                     Next.js 路由（当前只有模型预览首页）
-content/questions.ts     题库 v1：27 题 / 7 维度 / 反向验证题 / 红牌题
-lib/types.ts             全站类型契约
-lib/model.ts             维度、权重、红牌库、判定规则（产品可调参数都在这里）
-lib/scoring.ts           计分纯函数（可注入题库与规则，无副作用）
-lib/levels.ts            6 档等级文案
-lib/advice.ts            维度 → 改进建议库
-tests/scoring.test.ts    46 个单元测试
-docs/POSITIONING.md      Day 1 定位与模型定稿文档
+app/                     路由：/ /quiz /r/[code] /_not-found
+components/              RadarChart ScoreRing ResultView icons
+content/                 题库（canonical 源 + 生成的正式版）
+lib/                     types model scoring archetypes levels advice quiz store share-card copy brand
+scripts/                 生成器、审计、校准、端到端、截图
+tests/                   80 个单测（评分/编解码/设计系统契约）
+docs/POSITIONING.md      产品定位与决策记录
+public/fonts/            得意黑子集（OFL-1.1，附授权文件）
 ```
 
 ## 常用命令
 
 ```bash
-npm run dev        # 本地开发（含模型预览页）
-npm run test       # 跑单元测试
-npm run coverage   # 测试覆盖率报告
-npm run typecheck  # TypeScript 类型检查
-npm run verify     # typecheck + test（提交前跑这个）
+npm run dev        # 本地开发
+npm run verify     # typecheck + test（提交前跑）
 npm run build      # 生产构建
+npm run coverage   # 覆盖率
+
+# 题库改动后
+node --experimental-strip-types scripts/generate-questions.mjs --write
+node --experimental-strip-types scripts/find-score-ceiling.mjs
+node --experimental-strip-types scripts/find-score-floor.mjs
+node --experimental-strip-types scripts/audit-questions.mjs
+
+# 验证
+node --experimental-strip-types scripts/e2e-flow.mjs <url> [--red-flag]
+node scripts/measure-deployed.mjs <url>          # 布局溢出/字体/主题体检
+node scripts/screenshot-pages.mjs <url> <outDir> # 三页截图
 ```
 
-## 计分规则（详见 docs/POSITIONING.md）
+## 字体
 
-1. 每题 4 个选项，分值 0–4；维度得分 = 该维已答题实得分 / 已答题满分 × 100
-2. 总分 = Σ(维度得分 × 权重) / Σ权重，四舍五入到整数
-3. 未作答的题不计入分母（不做"未答 = 0 分"的误伤）
-4. 命中任一红牌 → 总分封顶 45（防止"冷暴力 + 送礼 = 高分"）
-5. 反向验证题差值过大 → 只提示、不扣分
+| 文件 | 用途 | 体积 |
+|---|---|---|
+| `smiley-sans-display.woff2` | 页面标题（静态文案子集） | 97.9 KB |
+| `smiley-sans-card.woff2` | 分享卡片（受控字符串子集） | 120.6 KB |
 
-## 改内容时的注意事项
-
-- 改权重：只改 `lib/model.ts` 的 `DIMENSIONS`，测试会校验权重合计必须为 100
-- 改题目：只改 `content/questions.ts`；新增红牌选项必须同时满足「选项带 redFlag」+「红牌 id 已在 RED_FLAGS 定义」，测试会拦截不一致
-- 改判定规则（封顶值、一致性阈值）：改 `lib/model.ts` 的 `RULES`
-- 所有内容改动后跑 `npm run verify`，全绿再提交
+得意黑 Smiley Sans Oblique，SIL OFL 1.1，可免费商用（授权文件随字体附带）。
+⚠️ 它只有斜体一个形态且汉字覆盖 8057（黑体 20902），**禁止用于正文**。
 
 ## 合规红线（写文案时务必遵守）
 
 - 定位是"娱乐向打分"，不做心理/医学诊断表述
 - 不收集姓名、手机号、聊天记录等任何身份信息
 - 小红书笔记内不放站外二维码、不写导流话术（平台禁止站外导流）
+- 原型文案不使用"渣男/分手吧/赶紧跑"等判决式词汇（测试有断言拦截）
 
 ## 许可
 
-本项目**代码与内容分开授权**：
-
-| 范围 | 许可 | 说明 |
-|---|---|---|
-| 代码、工程配置、测试 | MIT（见 `LICENSE`） | 欢迎复用，包括商业化使用 |
-| 题库、维度权重、等级文案、红牌规则、建议文案 | CC BY-NC 4.0（见 `content/LICENSE`） | 可学习参考，**不可商用**；商用需单独授权 |
-
-换句话说：**脚手架随便拿，27 道题和权重设计别拿去赚钱。**
+代码 MIT（`LICENSE`）；题库、维度权重、等级与原型文案 CC BY-NC 4.0（`content/LICENSE`）。
+即：脚手架随便拿，题目和权重设计别拿去赚钱。
