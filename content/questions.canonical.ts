@@ -34,22 +34,22 @@ export const QUESTIONS: readonly Question[] = [
   {
     id: 1,
     dimension: 'responsiveness',
-    text: '你发消息说"今天有点累"，他通常回你什么？',
+    text: '你发消息说「今天有点累」，他通常回你什么？',
     rationale: '回应性最日常的观察点：他接的是信息，还是情绪。',
     options: [
-      { text: '"怎么了？跟我说说"', weights: { responsiveness: 1, conflict: 0.6 } },
-      { text: '"累就早点睡"', weights: { responsiveness: 0.4 } },
+      { text: '「怎么了？跟我说说」', weights: { responsiveness: 1, conflict: 0.6 } },
+      { text: '「累就早点睡」', weights: { responsiveness: 0.4 } },
       { text: '回一个表情包', weights: { responsiveness: 0.2 } },
-      { text: '"谁不累啊"', weights: { responsiveness: 0 }, redFlag: 'invalidation' },
+      { text: '「谁不累啊」', weights: { responsiveness: 0 }, redFlag: 'invalidation' },
     ],
   },
   {
     id: 2,
     dimension: 'responsiveness',
     text: '你跟他讲一件今天让你很烦的事，讲到一半他会？',
-    rationale: '区分"解决问题"与"接住情绪"——很多矛盾来自前者被误当成不爱。',
+    rationale: '区分「解决问题」与「接住情绪」——很多矛盾来自前者被误当成不爱。',
     options: [
-      { text: '先问你"是不是特别委屈"', weights: { responsiveness: 1 } },
+      { text: '先问你「是不是特别委屈」', weights: { responsiveness: 1 } },
       { text: '安静听完，然后问你要不要建议', weights: { responsiveness: 0.9 } },
       { text: '直接告诉你该怎么处理', weights: { responsiveness: 0.5, load: 0.5 } },
       { text: '边听边看手机', weights: { responsiveness: 0.1 } },
@@ -59,9 +59,9 @@ export const QUESTIONS: readonly Question[] = [
     id: 3,
     dimension: 'responsiveness',
     text: '你心情不好，但没直说。他一般？',
-    rationale: '感知力：不需要明说也能被察觉，是"被在乎"的核心体验。',
+    rationale: '感知力：不需要明说也能被察觉，是「被在乎」的核心体验。',
     options: [
-      { text: '会问"你是不是不太开心"', weights: { responsiveness: 1 } },
+      { text: '会问「你是不是不太开心」', weights: { responsiveness: 1 } },
       { text: '看得出来，会主动逗你', weights: { responsiveness: 0.8 } },
       { text: '完全没察觉，跟平时一样', weights: { responsiveness: 0.2 } },
       { text: '察觉到了，但装作没看见', weights: { responsiveness: 0.1 } },
@@ -71,19 +71,19 @@ export const QUESTIONS: readonly Question[] = [
     id: 4,
     dimension: 'responsiveness',
     text: '你换了个新发型，或者买了件新衣服，他？',
-    rationale: '关注度：注意外表变化是最低成本的"我在看你"信号。',
+    rationale: '关注度：注意外表变化是最低成本的「我在看你」信号。',
     options: [
       { text: '一眼就发现，还会具体说出哪里不一样', weights: { responsiveness: 1 } },
       { text: '当场没发现，你提了之后认真夸', weights: { responsiveness: 0.7 } },
       { text: '你不提他就一直没注意', weights: { responsiveness: 0.3 } },
-      { text: '发现了，但说"还行吧"', weights: { responsiveness: 0.2 } },
+      { text: '发现了，但说「还行吧」', weights: { responsiveness: 0.2 } },
     ],
   },
   {
     id: 5,
     dimension: 'responsiveness',
     text: '你们待在一起，他一般是什么状态？',
-    rationale: '陪伴质量的关键是"在场感"，不是时长。',
+    rationale: '陪伴质量的关键是「在场感」，不是时长。',
     options: [
       { text: '手机放着，会看着你说话', weights: { responsiveness: 1, load: 0.4 } },
       { text: '各做各的，但你要说话他会停下手上的事', weights: { responsiveness: 0.8 } },
@@ -97,10 +97,10 @@ export const QUESTIONS: readonly Question[] = [
     text: '你因为他说的一句话难受了，他？',
     rationale: '承接情绪的能力，比道歉本身更重要。',
     options: [
-      { text: '会问你"哪句话让你不舒服了"', weights: { responsiveness: 1, conflict: 0.9 } },
-      { text: '说"我没那个意思"，然后不往下聊', weights: { responsiveness: 0.4, conflict: 0.3 } },
-      { text: '说"你想多了"', weights: { responsiveness: 0, conflict: 0 }, redFlag: 'invalidation' },
-      { text: '说"那我以后不说了"', weights: { responsiveness: 0.2, conflict: 0.2 } },
+      { text: '会问你「哪句话让你不舒服了」', weights: { responsiveness: 1, conflict: 0.9 } },
+      { text: '说「我没那个意思」，然后不往下聊', weights: { responsiveness: 0.4, conflict: 0.3 } },
+      { text: '说「你想多了」', weights: { responsiveness: 0, conflict: 0 }, redFlag: 'invalidation' },
+      { text: '说「那我以后不说了」', weights: { responsiveness: 0.2, conflict: 0.2 } },
     ],
   },
   {
@@ -109,7 +109,7 @@ export const QUESTIONS: readonly Question[] = [
     text: '他最近一次夸你，是关于什么？',
     rationale: '被认可感：只夸外表、或只在需要你时夸，与真正看见对方不同。',
     options: [
-      { text: '具体到某件事，比如"你今天处理得特别好"', weights: { responsiveness: 1 } },
+      { text: '具体到某件事，比如「你今天处理得特别好」', weights: { responsiveness: 1 } },
       { text: '关于你的性格或做事方式', weights: { responsiveness: 0.9 } },
       { text: '关于外表', weights: { responsiveness: 0.6 } },
       { text: '想不起来他最近夸过', weights: { responsiveness: 0.1 } },
@@ -137,10 +137,10 @@ export const QUESTIONS: readonly Question[] = [
     dimension: 'conflict',
     text: '你们意见不合的时候，他通常？',
     options: [
-      { text: '会问"你更在意的是哪一点"', weights: { conflict: 1, responsiveness: 0.8 } },
+      { text: '会问「你更在意的是哪一点」', weights: { conflict: 1, responsiveness: 0.8 } },
       { text: '会争，但争完能听进去一部分', weights: { conflict: 0.6 } },
       { text: '一定要说服我，证明他是对的', weights: { conflict: 0.2, responsiveness: 0.2 } },
-      { text: '直接不聊了，说"随便你"', weights: { conflict: 0.1 } },
+      { text: '直接不聊了，说「随便你」', weights: { conflict: 0.1 } },
     ],
   },
   {
@@ -150,7 +150,7 @@ export const QUESTIONS: readonly Question[] = [
     options: [
       { text: '承认得挺直接，会说下次怎么改', weights: { conflict: 1, consistency: 0.8 } },
       { text: '会道歉，但下次还会犯', weights: { conflict: 0.4, consistency: 0.2 } },
-      { text: '说"行了行了别说了"', weights: { conflict: 0.2, responsiveness: 0.2 } },
+      { text: '说「行了行了别说了」', weights: { conflict: 0.2, responsiveness: 0.2 } },
       { text: '很少道歉，觉得事情没那么严重', weights: { conflict: 0.1 } },
     ],
   },
@@ -160,7 +160,7 @@ export const QUESTIONS: readonly Question[] = [
     text: '你生气的时候，他会怎么反应？',
     options: [
       { text: '先哄，然后会问清楚到底怎么回事', weights: { responsiveness: 1, conflict: 1 } },
-      { text: '会有点慌，一直问你"怎么了"', weights: { responsiveness: 0.7, conflict: 0.6 } },
+      { text: '会有点慌，一直问你「怎么了」', weights: { responsiveness: 0.7, conflict: 0.6 } },
       { text: '比你还生气，觉得你小题大做', weights: { conflict: 0.1, responsiveness: 0.1 } },
       { text: '不说话，等你自己消气', weights: { conflict: 0.2, responsiveness: 0.2 } },
     ],
@@ -186,7 +186,7 @@ export const QUESTIONS: readonly Question[] = [
   {
     id: 13,
     dimension: 'consistency',
-    text: '他随口承诺的小事（"我明天给你带那个""周末陪你去"），兑现率大概是？',
+    text: '他随口承诺的小事（「我明天给你带那个」「周末陪你去」），兑现率大概是？',
     options: [
       { text: '基本都做到了', weights: { consistency: 1 } },
       { text: '大部分能，偶尔忘', weights: { consistency: 0.7 } },
@@ -230,7 +230,7 @@ export const QUESTIONS: readonly Question[] = [
   {
     id: 17,
     dimension: 'consistency',
-    text: '他说"我在忙"的时候，你知道他大概在忙什么吗？',
+    text: '他说「我在忙」的时候，你知道他大概在忙什么吗？',
     rationale: '信息透明度：不知道对方状态，是关系里最常见的不安全感来源。',
     options: [
       { text: '知道，他平时会说自己在做什么', weights: { consistency: 1, responsiveness: 0.5 } },
@@ -285,7 +285,7 @@ export const QUESTIONS: readonly Question[] = [
     id: 21,
     dimension: 'boundary',
     text: '他手机放在桌上，来消息时一般？',
-    rationale: '注意：这里测的是"你是否需要警惕"，不是"该不该看手机"。',
+    rationale: '注意：这里测的是「你是否需要警惕」，不是「该不该看手机」。',
     options: [
       { text: '他不在意，有时候还会念给我听', weights: { boundary: 1 } },
       { text: '正常放着，我不会想去看', weights: { boundary: 0.9 } },
@@ -299,7 +299,7 @@ export const QUESTIONS: readonly Question[] = [
     text: '他晚上出去跟朋友玩，一般会？',
     options: [
       { text: '会说去哪、和谁、大概几点回', weights: { boundary: 1, consistency: 0.6 } },
-      { text: '会说一声"我出去一下"', weights: { boundary: 0.7 } },
+      { text: '会说一声「我出去一下」', weights: { boundary: 0.7 } },
       { text: '去了之后我发消息才知道', weights: { boundary: 0.3 } },
       { text: '一整晚联系不上，第二天才回', weights: { boundary: 0, consistency: 0 } },
     ],
@@ -321,7 +321,7 @@ export const QUESTIONS: readonly Question[] = [
     id: 24,
     dimension: 'load',
     text: '纪念日、生日、要送谁礼物这类事，是谁在记？',
-    rationale: '心理负荷的经典测法：不是"谁做"，而是"谁记得"。',
+    rationale: '心理负荷的经典测法：不是「谁做」，而是「谁记得」。',
     options: [
       {
         text: '他记得比我还清楚，会提前问我怎么安排',
@@ -349,7 +349,7 @@ export const QUESTIONS: readonly Question[] = [
     text: '你们之间的小矛盾，一般是谁先察觉、谁先提？',
     options: [
       {
-        text: '他比较敏感，常是他先问我"是不是不高兴"',
+        text: '他比较敏感，常是他先问我「是不是不高兴」',
         weights: { load: 1, responsiveness: 1, conflict: 0.8 },
       },
       { text: '谁先发现谁提，不一定', weights: { load: 0.7, responsiveness: 0.7 } },
@@ -374,18 +374,18 @@ export const QUESTIONS: readonly Question[] = [
     id: 28,
     dimension: 'future',
     text: '他谈未来的时候，用的是什么样的句子？',
-    rationale: '承诺的语言标记：主语是"我"还是"我们"。',
+    rationale: '承诺的语言标记：主语是「我」还是「我们」。',
     options: [
-      { text: '"我们明年……"这种，带具体安排', weights: { future: 1, consistency: 0.6 } },
-      { text: '会说"以后"，但比较模糊', weights: { future: 0.6 } },
-      { text: '基本都是"我"要怎样，很少带"我们"', weights: { future: 0.2 } },
+      { text: '「我们明年……」这种，带具体安排', weights: { future: 1, consistency: 0.6 } },
+      { text: '会说「以后」，但比较模糊', weights: { future: 0.6 } },
+      { text: '基本都是「我」要怎样，很少带「我们」', weights: { future: 0.2 } },
       { text: '一聊未来就换话题', weights: { future: 0.1 } },
     ],
   },
   {
     id: 29,
     dimension: 'future',
-    text: '如果需要在"他的城市"和"你的城市"之间选，你们聊过吗？',
+    text: '如果需要在「他的城市」和「你的城市」之间选，你们聊过吗？',
     rationale: '权衡型问题：不预设答案，看这件事是否已被认真对待。',
     options: [
       { text: '认真聊过，他甚至提过具体怎么兼顾', weights: { future: 1, responsiveness: 0.6 } },
@@ -398,7 +398,7 @@ export const QUESTIONS: readonly Question[] = [
     id: 30,
     dimension: 'future',
     text: '他花钱的方式，给你的感觉是？',
-    rationale: '承诺的现实面：是否在为"共同生活"做准备，而不只是愿不愿意花钱。',
+    rationale: '承诺的现实面：是否在为「共同生活」做准备，而不只是愿不愿意花钱。',
     options: [
       { text: '有在存钱或规划，会跟我聊到', weights: { future: 1, responsiveness: 0.4 } },
       { text: '花钱挺正常，没想过那么远', weights: { future: 0.5 } },
@@ -412,8 +412,8 @@ export const QUESTIONS: readonly Question[] = [
     text: '你说想换个城市工作或读研，他第一反应是？',
     options: [
       { text: '问细节，然后一起想怎么安排', weights: { future: 1, responsiveness: 0.9 } },
-      { text: '支持，但说"到时候再说"', weights: { future: 0.5 } },
-      { text: '说"那我们的关系怎么办"', weights: { future: 0.4 } },
+      { text: '支持，但说「到时候再说」', weights: { future: 0.5 } },
+      { text: '说「那我们的关系怎么办」', weights: { future: 0.4 } },
       { text: '不太高兴，觉得我没考虑他', weights: { future: 0.3, responsiveness: 0.2 } },
     ],
   },
@@ -435,7 +435,7 @@ export const QUESTIONS: readonly Question[] = [
     dimension: 'integration',
     text: '他朋友聚会的时候，他一般？',
     options: [
-      { text: '自然介绍"这是我女朋友"，会顾着我', weights: { integration: 1, responsiveness: 0.6 } },
+      { text: '自然介绍「这是我女朋友」，会顾着我', weights: { integration: 1, responsiveness: 0.6 } },
       { text: '会带我去，但不太主动介绍', weights: { integration: 0.6 } },
       { text: '很少带我参加', weights: { integration: 0.3 } },
       { text: '不太想让我去，说男生聚不方便', weights: { integration: 0.1 } },
@@ -472,12 +472,12 @@ export const QUESTIONS: readonly Question[] = [
     dimension: 'conflict',
     text: '反过来看：他有没有在外面说过你的不好？',
     validates: 8,
-    rationale: '反向验证 Q8：冲突题讲修复，这里从"对外评价"侧面验证同一件事。',
+    rationale: '反向验证 Q8：冲突题讲修复，这里从「对外评价」侧面验证同一件事。',
     options: [
       { text: '没有，对外一直是维护我的', weights: { conflict: 1, integration: 0.8 } },
       { text: '开过玩笑，我说了之后就没再犯', weights: { conflict: 0.7, integration: 0.6 } },
       {
-        text: '经常拿我开玩笑，说"你怎么这么敏感"',
+        text: '经常拿我开玩笑，说「你怎么这么敏感」',
         weights: { conflict: 0 },
         redFlag: 'contempt',
       },

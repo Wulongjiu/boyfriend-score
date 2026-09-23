@@ -202,10 +202,76 @@ record('跳转到结果页 /r/[code]', onResult, await evalJs('location.pathname
 await waitFor(`!!document.querySelector('svg polygon')`, 8000);
 await sleep(1400); // 等分数滚动动画结束
 
+/* 结果页是**翻页式**：内容按页挂载（只渲染当前页与相邻页，控制 DOM 规模）。
+ * 因此断言必须真的翻页——顺便也就验证了翻页本身可用。 */
+const clickNextPage = () =>
+  evalJs(`(() => {
+    const next = [...document.querySelectorAll('button')].find(
+      (b) => b.getAttribute('aria-label') === '下一页',
+    );
+    if (!next || next.disabled) return false;
+    next.click();
+    return true;
+  })()`);
+
+const readVisiblePage = () =>
+  evalJs(`(() => {
+    const visible = [...document.querySelectorAll('section > div')].find((el) => !el.hidden);
+    return visible ? visible.textContent : '';
+  })()`);
+
+const pageSnapshots = [];
+for (let i = 0; i < 8; i += 1) {
+  pageSnapshots.push(await readVisiblePage());
+  if (!(await clickNextPage())) break;
+  await sleep(500);
+}
+const pageCount = pageSnapshots.length;
+const allText = pageSnapshots.join('\n');
+
+record('结果页为翻页式且页数正确', pageCount === 6, `共 ${pageCount} 页`);
+record('第 1 页有分数与等级', (pageSnapshots[0] ?? '').includes('满分'), '');
+record(
+  '第 2 页有红线或雷达图',
+  /红线|七根轴|七个维度/.test(pageSnapshots[1] ?? ''),
+  '',
+);
+record('第 3 页有维度明细', (pageSnapshots[2] ?? '').includes('权重'), '');
+record(
+  '第 4 页有完整原型解读',
+  (pageSnapshots[3] ?? '').includes('你们更像哪一种') && (pageSnapshots[3] ?? '').length > 200,
+  `${(pageSnapshots[3] ?? '').length} 字`,
+);
+record(
+  '第 5 页有信号与行动建议',
+  (pageSnapshots[4] ?? '').includes('可以留意的三个信号') &&
+    (pageSnapshots[4] ?? '').includes('接下来可以做的'),
+  '',
+);
+record(
+  '第 6 页有分享入口',
+  /保存分享卡片|把结果存下来/.test(pageSnapshots[5] ?? ''),
+  '',
+);
+
+if (HIT_RED_FLAG) {
+  record('红线警示出现', allText.includes('值得你认真看一眼'), '');
+  record('封顶提示出现', allText.includes('封顶'), '');
+}
+
+// 分数环 / 雷达图 / 等级在第 1、2 页，翻页后需回去再断言
+await evalJs(`(() => {
+  const first = [...document.querySelectorAll('button')].find(
+    (b) => b.getAttribute('aria-label')?.startsWith('跳到第 1 页'),
+  );
+  first?.click();
+})()`);
+await sleep(500);
+await sleep(1200); // 等分数滚动动画
+
 const result = await evalJs(`(() => {
   const scoreEl = document.querySelector('[aria-label^="得分"]');
   const code = location.pathname.split('/').pop();
-  const text = document.body.textContent;
   return {
     code,
     codeValid: /^[a-d-]+$/.test(code) && code.length === ${TOTAL_QUESTIONS},
@@ -213,19 +279,8 @@ const result = await evalJs(`(() => {
     score: scoreEl ? Number(scoreEl.textContent.trim()) : null,
     radarPolygons: document.querySelectorAll('svg polygon').length,
     levelText: document.querySelector('h1')?.textContent?.trim(),
-    archetypeSection: text.includes('你们更像哪一种'),
-    signalsSection: text.includes('可以留意的三个信号'),
-    drainSection: text.includes('你正在消耗什么'),
-    actionsSection: text.includes('接下来可以做的'),
-    redFlagShown: text.includes('值得你认真看一眼'),
-    cappedShown: text.includes('封顶'),
-    shareButtons: [...document.querySelectorAll('button')].map(b => b.textContent.trim()).filter(t => /保存分享卡片|复制结果链接/.test(t)),
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    disclaimer: text.includes('娱乐向内容'),
-    readingChars: (() => {
-      const sec = [...document.querySelectorAll('section')].find(s => s.textContent.includes('你们更像哪一种'));
-      return sec ? sec.textContent.length : 0;
-    })(),
+    disclaimer: document.body.textContent.includes('娱乐向'),
   };
 })()`);
 
@@ -233,20 +288,16 @@ record(`URL code 为 ${TOTAL_QUESTIONS} 位合法字符`, result.codeValid, `${r
 record('结果页显示分数', typeof result.score === 'number' && result.score >= 0 && result.score <= 100, `分数 ${result.score}`);
 record('雷达图渲染', result.radarPolygons >= 6, `${result.radarPolygons} 个多边形`);
 record('等级称号渲染', !!result.levelText, String(result.levelText));
-record('关系原型区块存在', result.archetypeSection === true);
-record('原型解读有实质内容', result.readingChars > 200, `${result.readingChars} 字`);
-record('三个信号区块存在', result.signalsSection === true);
-record('消耗点区块存在', result.drainSection === true);
-record('行动建议区块存在', result.actionsSection === true);
-record('分享按钮存在', result.shareButtons.length === 2, result.shareButtons.join(' / '));
 record('结果页无横向溢出', result.overflow === false);
 record('免责声明存在', result.disclaimer === true);
-if (HIT_RED_FLAG) {
-  record('红线警示出现', result.redFlagShown === true);
-  record('封顶提示出现', result.cappedShown === true, `分数 ${result.score}`);
-}
 
 /* ---------------- 4. 分享卡片生成 ---------------- */
+// 确保停在最后一页（分享页）再点保存
+for (let i = 0; i < 6; i += 1) {
+  if (!(await clickNextPage())) break;
+  await sleep(300);
+}
+await sleep(500);
 await evalJs(
   `[...document.querySelectorAll('button')].find(b => b.textContent.includes('保存分享卡片'))?.click()`,
 );

@@ -77,9 +77,28 @@ const evalJs = async (expr) => {
   return result.value;
 };
 
+/**
+ * 等待条件成立
+ *
+ * ⚠️ 踩过的坑：只等固定时长就执行 setup，点击会落在**尚未 hydration** 的按钮上，
+ * 于是翻页静默失效（截图看起来和第一页一样）。必须等交互元素真正就绪。
+ */
+const waitFor = async (expr, timeout = 15000, interval = 200) => {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    if (await evalJs(expr)) return true;
+    await sleep(interval);
+  }
+  return false;
+};
+
 mkdirSync(OUT_DIR, { recursive: true });
 
-async function shoot(name, url, { width = 390, height = 844, fullPage = true, setup } = {}) {
+async function shoot(
+  name,
+  url,
+  { width = 390, height = 844, fullPage = true, setup, settle = 1600, gotoPage } = {},
+) {
   await send('Emulation.setDeviceMetricsOverride', {
     width,
     height,
@@ -87,10 +106,29 @@ async function shoot(name, url, { width = 390, height = 844, fullPage = true, se
     mobile: true,
   });
   await send('Page.navigate', { url });
-  await sleep(3000);
+  // 等页面可交互（而不是等固定时长）：翻页依赖 React 事件绑定
+  await waitFor(`!!document.querySelector('footer button, footer a')`, 15000);
+  await sleep(600);
+
+  // 翻页式页面：连点"下一页"到指定页（在确认可交互之后执行）
+  if (gotoPage && gotoPage > 1) {
+    for (let k = 1; k < gotoPage; k += 1) {
+      const moved = await evalJs(`(() => {
+        const next = [...document.querySelectorAll('button')].find(
+          (b) => b.getAttribute('aria-label') === '下一页',
+        );
+        if (!next || next.disabled) return false;
+        next.click();
+        return true;
+      })()`);
+      if (!moved) break;
+      await sleep(450);
+    }
+  }
+
   if (setup) {
     await evalJs(setup);
-    await sleep(1600);
+    await sleep(settle);
   }
   const { data } = await send('Page.captureScreenshot', {
     format: 'png',
@@ -112,6 +150,16 @@ await shoot('shot-2-quiz.png', `${BASE}/quiz`, {
   setup: `document.querySelectorAll('[aria-pressed]')[1]?.click()`,
 });
 await shoot('shot-3-result-redflag.png', `${BASE}/r/${RED_FLAG_CODE}`);
+
+/* 结果页是翻页式：逐页截图，便于检查每页排版 */
+console.log('结果页逐页截图:');
+for (let i = 1; i <= 6; i += 1) {
+  await shoot(`shot-result-p${i}.png`, `${BASE}/r/${RED_FLAG_CODE}`, {
+    fullPage: false,
+    settle: 700,
+    gotoPage: i,
+  });
+}
 
 ws.close();
 child.kill();

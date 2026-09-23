@@ -32,9 +32,36 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
 
   const cx = size / 2;
   const cy = size / 2;
-  // 留出标签空间：半径占 62%
-  const radius = size * 0.31;
-  const labelRadius = size * 0.44;
+  /**
+   * 半径与标签位置
+   *
+   * ⚠️ 这里踩过坑：曾经写死 labelRadius = size * 0.44，导致「一致」「未来」
+   * 两个标签超出 viewBox 被裁掉（右侧溢出 28px、左侧 6px）。
+   * 现在按**文字实际宽度**算出各轴能承受的最大标签半径，取最小值——
+   * 这样以后改轴标签文案也不会再溢出。
+   *
+   * 估算依据：中文标签 2 字 ≈ 2×fontSize，加安全余量。
+   * ⚠️ 余量取 12 而不是 6：实测浏览器渲染的汉字宽度比 1×fontSize 略宽，
+   *    6px 余量下「一致」「未来」仍会各溢出 5px（这个数字是实测出来的，
+   *    不是估的）。12px 留出足够安全边际。
+   */
+  const labelFontSize = Math.max(11, Math.round(size * 0.043));
+  const pad = 12;
+  const maxLabelRadius = Math.min(
+    ...dimensions.map((d, i) => {
+      const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+      const cos = Math.cos(angle);
+      const halfW = (d.short.length * labelFontSize) / 2 + pad;
+      // 上下方向的轴标签水平居中，不受 x 方向限制
+      if (Math.abs(cos) < 0.2) return size / 2;
+      // 右侧：标签从 x 向右延伸 → 需要 cx + R + halfW <= size
+      if (cos > 0) return size - cx - halfW;
+      // 左侧：标签从 x 向左延伸 → 需要 cx - R - halfW >= 0
+      return cx - halfW;
+    }),
+  );
+  const radius = Math.max(size * 0.2, maxLabelRadius * 0.86); // 网格留出标签间隙
+  const labelRadius = maxLabelRadius;
 
   /** 第 i 个轴上的点（12 点方向为第 0 轴，顺时针） */
   const pointAt = (index: number, ratio: number) => {
@@ -110,10 +137,10 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
           <g key={d.id}>
             <text
               x={x}
-              y={y - 4}
+              y={y - labelFontSize * 0.32}
               textAnchor={anchor}
               dominantBaseline="middle"
-              fontSize={13}
+              fontSize={labelFontSize}
               fontWeight={500}
               fill={INK}
             >
@@ -121,10 +148,10 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
             </text>
             <text
               x={x}
-              y={y + 13}
+              y={y + labelFontSize * 1.02}
               textAnchor={anchor}
               dominantBaseline="middle"
-              fontSize={12}
+              fontSize={labelFontSize - 1}
               fontWeight={700}
               fill={d.score < 60 ? ROSE : INK_MUTE}
             >
