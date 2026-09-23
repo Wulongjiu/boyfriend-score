@@ -143,6 +143,8 @@ export interface ConsistencyResult {
   isLow: boolean;
   /** 参与校验的题对数 */
   comparedPairs: number;
+  /** 低一致性时给用户的提示文案（未触发时为 null） */
+  hint: string | null;
 }
 
 /** 计分结果 */

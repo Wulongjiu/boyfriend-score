@@ -144,14 +144,16 @@ export function checkConsistency(
   }
 
   if (diffs.length === 0) {
-    return { meanDiff: null, isLow: false, comparedPairs: 0 };
+    return { meanDiff: null, isLow: false, comparedPairs: 0, hint: null };
   }
 
   const meanDiff = diffs.reduce((sum, d) => sum + d, 0) / diffs.length;
+  const isLow = meanDiff > rules.consistencyThreshold;
   return {
     meanDiff: roundTo(meanDiff, 1),
-    isLow: meanDiff > rules.consistencyThreshold,
+    isLow,
     comparedPairs: diffs.length,
+    hint: isLow ? rules.consistencyHint : null,
   };
 }
 

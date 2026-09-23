@@ -1,135 +1,176 @@
+import Link from 'next/link';
+
 import { QUESTIONS, TOTAL_QUESTIONS } from '../content/questions';
 import { BRAND } from '../lib/brand';
+import { COPY } from '../lib/copy';
 import { DIMENSIONS, RED_FLAGS } from '../lib/model';
 import { LEVELS } from '../lib/levels';
-import { computeScore } from '../lib/scoring';
 
+/**
+ * 首页（服务端组件）
+ *
+ * 首屏 3 秒内必须让人明白：这是什么、要花多久、能得到什么。
+ * "生存指数"是玩梗，所以第一句就写「他能不能活下来，先测了再说」定调，
+ * 避免被读成"评判男友该不该死"。
+ */
 export default function Home() {
-  // 用一份示例答案渲染真实的计分结果（Day 1 模型预览，真正的答题页在第 6–8 天）
-  const sampleAnswers = {
-    1: 0,
-    2: 0,
-    3: 1,
-    5: 1,
-    6: 0,
-    7: 1,
-    10: 1,
-    13: 0,
-    16: 1,
-    21: 1,
-    24: 1,
-  };
-  const sample = computeScore(sampleAnswers);
+  const levelPreview = [...LEVELS].reverse();
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-14 text-neutral-800">
-      <p className="text-xs font-medium tracking-widest text-rose-500">
-        {BRAND.name} · DAY 1 模型预览
-      </p>
-      <h1 className="mt-3 text-3xl font-semibold leading-snug">{BRAND.tagline}</h1>
-      <p className="mt-3 text-sm text-neutral-500">
-        当前进度：{TOTAL_QUESTIONS} 道题 / {DIMENSIONS.length} 个维度 / {LEVELS.length} 个等级 /{' '}
-        {RED_FLAGS.length} 条红线，计分逻辑已通过 46 个单元测试。
-      </p>
-
-      {/* 示例结果 */}
-      <section className="mt-10 rounded-2xl border border-rose-100 bg-rose-50/50 p-6">
-        <p className="text-xs text-rose-500">示例结果（只答了 11 题）</p>
-        <div className="mt-2 flex items-end gap-3">
-          <span className="text-6xl font-bold tabular-nums text-rose-600">
-            {sample.total}
-          </span>
-          <div className="pb-2">
-            <p className="text-lg font-semibold">{sample.level.title}</p>
-            <p className="text-sm text-neutral-600">{sample.level.oneLiner}</p>
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-neutral-500">
-          已答 {sample.answeredCount} / {sample.totalQuestions} 题 · 未答题目不计入分母（
-          {sample.isComplete ? '已完成' : '进行中'}）
+    <main className="mx-auto max-w-md px-5 pb-16 pt-12">
+      {/* 首屏 */}
+      <section className="text-center">
+        <p className="text-[11px] font-medium tracking-widest text-rose-500">
+          {COPY.home.eyebrow}
         </p>
+        <h1 className="mt-4 text-[32px] font-extrabold leading-tight text-neutral-900">
+          {COPY.home.h1}
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-neutral-500">{COPY.home.sub}</p>
+
+        <Link
+          href="/quiz"
+          className="mt-8 block w-full rounded-2xl bg-rose-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-rose-200 transition active:scale-[0.98]"
+        >
+          {COPY.home.cta}
+        </Link>
+        <p className="mt-2 text-[11px] text-neutral-400">{COPY.home.ctaSub}</p>
       </section>
 
-      {/* 维度表 */}
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold">七个维度与权重</h2>
-        <ul className="mt-4 space-y-3">
+      {/* 信任点 */}
+      <section className="mt-9 grid grid-cols-3 gap-2">
+        {COPY.home.trust.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-xl border border-neutral-200 bg-white p-3 text-center"
+          >
+            <p className="text-lg">{item.icon}</p>
+            <p className="mt-1 text-xs font-medium text-neutral-800">{item.title}</p>
+            <p className="mt-1 text-[10px] leading-snug text-neutral-400">{item.desc}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* 结果预览 */}
+      <section className="mt-9 rounded-2xl border border-rose-100 bg-rose-50/60 p-5">
+        <p className="text-xs font-medium text-rose-500">{COPY.home.mockTitle}</p>
+        <div className="mt-4 flex items-end gap-4">
+          <span className="text-5xl font-extrabold tabular-nums text-rose-600">82</span>
+          <div className="pb-1">
+            <p className="text-base font-bold text-neutral-800">及格线以上的甜</p>
+            <p className="text-xs text-neutral-500">有爱的底子，有几个地方值得聊聊</p>
+          </div>
+        </div>
+        <ul className="mt-4 space-y-2">
+          {[
+            { label: '情绪价值与沟通', score: 88 },
+            { label: '时间与陪伴质量', score: 75 },
+            { label: '边界感与异性社交', score: 60 },
+          ].map((item) => (
+            <li key={item.label}>
+              <div className="flex items-baseline justify-between text-[11px] text-neutral-500">
+                <span>{item.label}</span>
+                <span className="tabular-nums">{item.score}</span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full bg-rose-400"
+                  style={{ width: `${item.score}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-[11px] text-neutral-400">{COPY.home.mockNote}</p>
+      </section>
+
+      {/* 计分说明 */}
+      <section className="mt-9">
+        <h2 className="text-base font-semibold text-neutral-800">
+          {COPY.home.sections.howTitle}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+          {COPY.home.sections.howDesc}
+        </p>
+        <ul className="mt-4 space-y-2">
           {DIMENSIONS.map((dimension) => {
-            const result = sample.dimensions.find((d) => d.id === dimension.id)!;
             const count = QUESTIONS.filter((q) => q.dimension === dimension.id).length;
             return (
-              <li key={dimension.id} className="rounded-xl border border-neutral-200 p-4">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-medium">
-                    {dimension.label}
-                    <span className="ml-2 text-xs text-neutral-400">
-                      权重 {dimension.weight}% · {count} 题
-                    </span>
-                  </span>
-                  <span className="tabular-nums text-sm text-neutral-500">
-                    {result.answered > 0 ? `${result.score} 分` : '未答'}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-neutral-500">{dimension.description}</p>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
-                  <div
-                    className="h-full rounded-full bg-rose-400"
-                    style={{ width: `${result.score}%` }}
-                  />
-                </div>
+              <li
+                key={dimension.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
+              >
+                <span className="text-sm text-neutral-700">{dimension.label}</span>
+                <span className="shrink-0 text-[11px] text-neutral-400">
+                  {count} 题 · 权重 {dimension.weight}%
+                </span>
               </li>
             );
           })}
         </ul>
+        <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
+          另有 {RED_FLAGS.length} 条红线：命中会让总分封顶，避免"他平时挺好"抵消掉冷暴力这类行为。
+        </p>
       </section>
 
       {/* 等级表 */}
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold">六个等级</h2>
-        <ul className="mt-4 divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200">
-          {[...LEVELS].reverse().map((level) => (
+      <section className="mt-9">
+        <h2 className="text-base font-semibold text-neutral-800">
+          {COPY.home.sections.levelsTitle}
+        </h2>
+        <ul className="mt-4 divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          {levelPreview.map((level) => (
             <li
               key={level.id}
-              className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3 text-sm"
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 text-sm"
             >
-              <span className="w-16 shrink-0 tabular-nums text-neutral-400">
-                {level.min}–{level.max}
+              <span className="w-14 shrink-0 tabular-nums text-[11px] text-neutral-400">
+                {level.min}–
               </span>
-              <span className="font-medium sm:w-40 sm:shrink-0">{level.title}</span>
-              {/* min-w-0 防止长中文在窄屏 flex 里被压成一列一个字 */}
-              <span className="min-w-0 flex-1 text-neutral-500">{level.oneLiner}</span>
+              <span className="font-medium text-neutral-800 sm:w-36 sm:shrink-0">
+                {level.title}
+              </span>
+              <span className="min-w-0 flex-1 text-[11px] text-neutral-500">
+                {level.oneLiner}
+              </span>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* 第一题预览 */}
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold">第 1 题长这样</h2>
-        <div className="mt-4 rounded-xl border border-neutral-200 p-5">
-          <p className="font-medium">{QUESTIONS[0].text}</p>
-          <ul className="mt-3 space-y-2">
-            {QUESTIONS[0].options.map((option, index) => (
-              <li
-                key={option.text}
-                className="rounded-lg border border-neutral-200 px-4 py-3 text-sm text-neutral-700"
-              >
-                <span className="mr-2 text-neutral-400">{'ABCD'[index]}</span>
-                {option.text}
-                <span className="float-right text-xs text-neutral-300">
-                  {option.score} 分
-                </span>
-              </li>
-            ))}
-          </ul>
+      {/* FAQ */}
+      <section className="mt-9">
+        <h2 className="text-base font-semibold text-neutral-800">
+          {COPY.home.sections.faqTitle}
+        </h2>
+        <div className="mt-4 space-y-4">
+          {COPY.home.faq.map((item) => (
+            <div key={item.q} className="rounded-xl border border-neutral-200 bg-white p-4">
+              <p className="text-sm font-medium text-neutral-800">{item.q}</p>
+              <p className="mt-2 text-xs leading-relaxed text-neutral-500">{item.a}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <p className="mt-12 text-xs text-neutral-400">
-        Day 1 交付物已就位：定位文档 <code>docs/POSITIONING.md</code> · 题库{' '}
-        <code>content/questions.ts</code> · 模型 <code>lib/model.ts</code> · 计分{' '}
-        <code>lib/scoring.ts</code> · 测试 <code>tests/scoring.test.ts</code>
-      </p>
+      {/* 底部 CTA */}
+      <section className="mt-10 text-center">
+        <Link
+          href="/quiz"
+          className="block w-full rounded-2xl bg-rose-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-rose-200 transition active:scale-[0.98]"
+        >
+          {COPY.home.finalCta}
+        </Link>
+        <p className="mt-3 text-[11px] text-neutral-400">{COPY.home.footerNote}</p>
+      </section>
+
+      <footer className="mt-10 border-t border-neutral-100 pt-6 text-center">
+        <p className="text-[11px] leading-relaxed text-neutral-400">
+          {BRAND.disclaimer}
+          <br />
+          共 {TOTAL_QUESTIONS} 题 · {BRAND.signature}
+        </p>
+      </footer>
     </main>
   );
 }
