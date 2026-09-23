@@ -150,10 +150,14 @@ const home = await evalJs(`({
 record('首页渲染 H1', !!home.h1, String(home.h1 ?? '').slice(0, 30));
 record('首页有进入答题页的入口', home.ctaHref === '/quiz', String(home.ctaHref));
 record('首页无横向溢出', home.overflow === false);
+// 注意：font-display: swap 让标题字体异步加载，必须等 document.fonts.ready
+// 再断言，否则会误判为"未使用得意黑"（本地快、线上慢时尤其明显）。
 record(
   '首页使用得意黑标题',
   await evalJs(
-    `[...document.querySelectorAll('h1')].some(el => getComputedStyle(el).fontFamily.includes('Smiley'))`,
+    `document.fonts.ready.then(() =>
+       [...document.querySelectorAll('h1')].some(el =>
+         getComputedStyle(el).fontFamily.includes('Smiley')))`,
   ),
 );
 
