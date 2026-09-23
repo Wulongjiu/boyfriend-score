@@ -7,6 +7,8 @@ import type { DimensionResult } from '../lib/types';
  *
  * 为什么不用 ECharts / Recharts：它们会给首包加几百 KB，而这里只需要
  * 一个 7 轴多边形。手写 SVG 体积接近 0，且能精确控制视觉。
+ *
+ * 配色随设计系统 v2（杂志风）：网格用浅墨、数据面用玫瑰、轴标签用墨黑/玫瑰。
  */
 
 interface RadarChartProps {
@@ -15,6 +17,14 @@ interface RadarChartProps {
 }
 
 const LEVELS = [20, 40, 60, 80, 100];
+
+/** 网格线：墨黑低透明度，避免在奶油底上偏色 */
+const GRID = 'rgba(18,16,14,0.18)';
+const GRID_STRONG = 'rgba(18,16,14,0.32)';
+const INK = '#12100e';
+const INK_MUTE = '#6f6864';
+const ROSE = '#c2003a';
+const ROSE_FILL = 'rgba(194,0,58,0.16)';
 
 export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) {
   const count = dimensions.length;
@@ -67,7 +77,7 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
           key={level}
           points={points}
           fill="none"
-          stroke="#f1d4d8"
+          stroke={level === 100 ? GRID_STRONG : GRID}
           strokeWidth={level === 100 ? 2 : 1}
         />
       ))}
@@ -76,25 +86,17 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
       {dimensions.map((d, i) => {
         const p = pointAt(i, 1);
         return (
-          <line
-            key={d.id}
-            x1={cx}
-            y1={cy}
-            x2={p.x}
-            y2={p.y}
-            stroke="#f1d4d8"
-            strokeWidth={1}
-          />
+          <line key={d.id} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={GRID} strokeWidth={1} />
         );
       })}
 
       {/* 数据多边形 */}
-      <polygon points={dataPolygon} fill="rgba(225,29,72,0.18)" stroke="#e11d48" strokeWidth={2.5} />
+      <polygon points={dataPolygon} fill={ROSE_FILL} stroke={ROSE} strokeWidth={3} />
 
       {/* 数据点 */}
       {dimensions.map((d, i) => {
         const p = pointAt(i, Math.max(0, Math.min(100, d.score)) / 100);
-        return <circle key={d.id} cx={p.x} cy={p.y} r={4} fill="#e11d48" />;
+        return <circle key={d.id} cx={p.x} cy={p.y} r={4.5} fill={ROSE} stroke={INK} strokeWidth={1} />;
       })}
 
       {/* 轴标签 + 分数 */}
@@ -112,18 +114,19 @@ export default function RadarChart({ dimensions, size = 300 }: RadarChartProps) 
               textAnchor={anchor}
               dominantBaseline="middle"
               fontSize={13}
-              fill="#4b5563"
+              fontWeight={500}
+              fill={INK}
             >
               {d.short}
             </text>
             <text
               x={x}
-              y={y + 12}
+              y={y + 13}
               textAnchor={anchor}
               dominantBaseline="middle"
               fontSize={12}
-              fontWeight={600}
-              fill="#e11d48"
+              fontWeight={700}
+              fill={d.score < 60 ? ROSE : INK_MUTE}
             >
               {Math.round(d.score)}
             </text>

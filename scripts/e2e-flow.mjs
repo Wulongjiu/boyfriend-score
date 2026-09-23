@@ -152,7 +152,8 @@ const quizLoaded = await waitFor(`!!document.querySelector('[aria-pressed]')`);
 record('答题页加载出选项', quizLoaded);
 
 const total = await evalJs(
-  `document.body.textContent.match(/第\\s*1\\s*\\/\\s*(\\d+)\\s*题/)?.[1] ?? null`,
+  // 杂志风改版后进度是页码式「01 / 27」（旧格式「第 1 / 27 题」已废弃）
+  `(document.body.textContent.match(/\\d+\\s*\\/\\s*(\\d+)/)?.[1]) ?? null`,
 );
 record('识别题量', total === '27', `识别到 ${total}`);
 

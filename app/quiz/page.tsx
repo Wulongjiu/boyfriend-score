@@ -6,20 +6,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QUESTIONS, TOTAL_QUESTIONS } from '../../content/questions';
 import { BRAND } from '../../lib/brand';
 import { COPY } from '../../lib/copy';
+import { DIMENSION_MAP } from '../../lib/model';
 import { encodeAnswers } from '../../lib/quiz';
 import { getAnswerIndex, isQuizComplete } from '../../lib/scoring';
-import { DIMENSION_MAP } from '../../lib/model';
 import { useQuizStore } from '../../lib/store';
 import type { Answers } from '../../lib/types';
+import { IconArrow, IconLock } from '../../components/icons';
 
 /**
- * 答题页（一次一题）
+ * 答题页（一次一题）—— 杂志专栏风
  *
- * 关键取舍：
- *  - 进度存 localStorage，中途退出可续答（比"必须一次答完"的完成率高很多）
- *  - 选中后自动进入下一题，减少点击次数；最后一题改为点「看结果」
- *  - 允许回退修改，但一旦全部答完就不再自动跳转，避免覆盖用户想改的答案
- *  - 答完后以 7 字符 code 跳转结果页（服务端零存储，见 lib/quiz.ts）
+ * 设计要点：
+ *  - 进度用黑色粗描边进度条 + 得意黑题号，强化"杂志页码"的感觉
+ *  - 选项卡片：白底 + 黑描边；选中态切换为玫瑰实底 + 白字（对比度 6.26:1）
+ *  - 选中后有一个「按下」的位移反馈（translate + 阴影收缩），替代廉价的高亮
+ *
+ * 交互取舍（保持原有行为不变）：
+ *  - 进度存 localStorage，中途退出可续答
+ *  - 选中后自动进入下一题，减少点击；全部答完则不再自动跳转
+ *  - 允许回退修改，答完以 7 字符 code 跳转结果页（服务端零存储）
  */
 export default function QuizPage() {
   const router = useRouter();
@@ -37,12 +42,10 @@ export default function QuizPage() {
   );
   const complete = answers ? isQuizComplete(answers, QUESTIONS) : false;
 
-  // 首次挂载：跳到第一个未作答的题，实现"续答"
+  // 首次挂载：跳到第一个未作答的题，实现「续答」
   useEffect(() => {
     const stored: Answers = answers ?? {};
-    const firstUnanswered = QUESTIONS.find(
-      (q) => getAnswerIndex(stored, q) === undefined,
-    );
+    const firstUnanswered = QUESTIONS.find((q) => getAnswerIndex(stored, q) === undefined);
     if (firstUnanswered) {
       setIndex(QUESTIONS.findIndex((q) => q.id === firstUnanswered.id));
     }
@@ -71,12 +74,11 @@ export default function QuizPage() {
       const next: Answers = { ...(answers ?? {}), [current.id]: optionIndex };
       setAnswer(current.id, optionIndex);
 
-      // 已经全部答完：不再自动跳题，把"看结果"的决定权交给用户
+      // 已全部答完：不自动跳题，把「看结果」的决定权交给用户
       if (isQuizComplete(next, QUESTIONS)) return;
 
       if (advanceTimer.current) clearTimeout(advanceTimer.current);
       advanceTimer.current = setTimeout(() => {
-        // 跳到下一道未作答的题（跳过已经答过的）
         const nextUnanswered = QUESTIONS.find(
           (q) => q.id !== current.id && getAnswerIndex(next, q) === undefined,
         );
@@ -125,56 +127,59 @@ export default function QuizPage() {
 
   const selected = answers ? getAnswerIndex(answers, current) : undefined;
   const isLast = index === TOTAL_QUESTIONS - 1;
+  const progressPercent = (answeredCount / TOTAL_QUESTIONS) * 100;
 
-  // 未挂载完成前不渲染题目，避免 hydration 闪烁
   if (!ready) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-5">
-        <p className="text-sm text-neutral-500">{COPY.common.loading}</p>
+        <p className="text-sm text-ink-mute">{COPY.common.loading}</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-8 pt-8">
-      {/* 顶部进度 */}
+    <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-8 pt-7">
+      {/* ── 进度（杂志页码感） ─────────────────────────────── */}
       <header>
-        <div className="flex items-baseline justify-between text-[11px] text-neutral-500">
-          <span>{COPY.quiz.progressLabel(index + 1, TOTAL_QUESTIONS)}</span>
+        <div className="flex items-end justify-between">
+          <p className="font-display text-lg leading-none text-ink">
+            {String(index + 1).padStart(2, '0')}
+            <span className="text-ink-mute"> / {TOTAL_QUESTIONS}</span>
+          </p>
           <button
             type="button"
             onClick={handleRestart}
-            className="text-neutral-500 underline decoration-dotted"
+            className="text-[11px] text-ink-mute underline decoration-dotted underline-offset-2"
           >
             {COPY.quiz.restartHint}
           </button>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rose-100">
+
+        <div className="mt-2.5 h-2.5 border-2 border-ink bg-white">
           <div
-            className="h-full rounded-full bg-rose-500 transition-all duration-300"
-            style={{ width: `${(answeredCount / TOTAL_QUESTIONS) * 100}%` }}
+            className="h-full bg-rose-bright transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="mt-2 text-[11px] text-neutral-500">
+
+        <p className="mt-2 text-[11px] text-ink-mute">
           {COPY.quiz.subtitle}
           {answeredCount > 0 && answeredCount < TOTAL_QUESTIONS && (
-            <span className="ml-2 text-rose-600">
+            <span className="ml-2 font-semibold text-rose">
               {COPY.quiz.resumeHint(answeredCount)}
             </span>
           )}
         </p>
       </header>
 
-      {/* 题目 */}
-      <section className="mt-8 flex-1">
-        <p className="text-[11px] font-medium text-rose-600">
+      {/* ── 题目 ──────────────────────────────────────────── */}
+      <section className="mt-7 flex-1">
+        <p className="text-[10px] font-semibold tracking-[0.16em] text-rose">
           {DIMENSION_MAP[current.dimension].label}
         </p>
-        <h1 className="mt-2 text-xl font-bold leading-snug text-neutral-900">
-          {current.text}
-        </h1>
+        <h1 className="mt-2 text-[22px] font-semibold leading-snug text-ink">{current.text}</h1>
 
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-5 space-y-3">
           {current.options.map((option, optionIndex) => {
             const isSelected = selected === optionIndex;
             return (
@@ -183,22 +188,20 @@ export default function QuizPage() {
                   type="button"
                   onClick={() => handleSelect(optionIndex)}
                   aria-pressed={isSelected}
-                  className={`w-full rounded-2xl border-2 px-4 py-4 text-left text-sm leading-relaxed transition active:scale-[0.99] ${
+                  className={`flex w-full items-start gap-3 border-2 border-ink px-4 py-3.5 text-left text-[14px] leading-relaxed transition ${
                     isSelected
-                      ? 'border-rose-500 bg-rose-50 font-medium text-rose-700'
-                      : 'border-neutral-200 bg-white text-neutral-700'
+                      ? 'translate-x-[3px] translate-y-[3px] bg-rose text-white shadow-none'
+                      : 'bg-white text-ink shadow-[3px_3px_0_var(--ink)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--ink)]'
                   }`}
                 >
                   <span
-                    className={`mr-2.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
-                      isSelected
-                        ? 'bg-rose-500 text-white'
-                        : 'bg-neutral-100 text-neutral-600'
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center font-display text-[13px] ${
+                      isSelected ? 'bg-white text-rose' : 'bg-ink text-paper'
                     }`}
                   >
                     {'ABCD'[optionIndex]}
                   </span>
-                  {option.text}
+                  <span className="min-w-0 flex-1">{option.text}</span>
                 </button>
               </li>
             );
@@ -206,21 +209,22 @@ export default function QuizPage() {
         </ul>
 
         {nudge && (
-          <p className="mt-4 rounded-xl bg-amber-50 px-4 py-2 text-xs text-amber-700">
+          <p className="mt-4 border-2 border-ink bg-amber-tint px-4 py-2.5 text-[12px] text-ink">
             这一题还没选哦，随便选一个最接近的就好。
           </p>
         )}
       </section>
 
-      {/* 底部操作 */}
-      <footer className="mt-8 space-y-3">
+      {/* ── 底部操作 ──────────────────────────────────────── */}
+      <footer className="mt-7 space-y-3">
         {complete && (
           <button
             type="button"
             onClick={handleSeeResult}
-            className="w-full rounded-2xl bg-rose-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-rose-200 transition active:scale-[0.98]"
+            className="flex w-full items-center justify-between border-2 border-ink bg-rose px-5 py-4 text-white shadow-[5px_5px_0_var(--ink)] transition active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_var(--ink)]"
           >
-            {COPY.quiz.seeResult}
+            <span className="font-display text-xl">{COPY.quiz.seeResult}</span>
+            <IconArrow size={22} />
           </button>
         )}
 
@@ -229,7 +233,7 @@ export default function QuizPage() {
             type="button"
             onClick={handlePrev}
             disabled={index === 0}
-            className="flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600 transition active:scale-[0.98] disabled:opacity-40"
+            className="flex-1 border-2 border-ink bg-white px-4 py-3 text-[13px] font-medium text-ink transition active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-40 disabled:shadow-none"
           >
             {COPY.quiz.prev}
           </button>
@@ -237,14 +241,15 @@ export default function QuizPage() {
             <button
               type="button"
               onClick={handleNext}
-              className="flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600 transition active:scale-[0.98]"
+              className="flex-1 border-2 border-ink bg-white px-4 py-3 text-[13px] font-medium text-ink shadow-[3px_3px_0_var(--ink)] transition active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--ink)]"
             >
               {COPY.quiz.next}
             </button>
           )}
         </div>
 
-        <p className="text-center text-[10px] text-neutral-500">
+        <p className="flex items-center justify-center gap-1.5 pt-1 text-[10px] text-ink-mute">
+          <IconLock size={12} />
           {BRAND.name} · 答案只存在你的手机上
         </p>
       </footer>
