@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/*
+ * 设计约束（改动前请先读）：
+ * 1. 强制浅色：分享卡片用 html-to-image 截图，若跟随系统深色模式会截出黑卡
+ * 2. 字体：Geist 只覆盖拉丁字符，中文必须靠系统中文黑体兜底（卡片出图字体见 Day 12 计划）
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: var(--font-geist-mono), 'SFMono-Regular', Consolas, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
