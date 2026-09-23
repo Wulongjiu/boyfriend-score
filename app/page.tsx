@@ -88,12 +88,16 @@ export default function Home() {
         <h2 className="text-lg font-semibold">六个等级</h2>
         <ul className="mt-4 divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200">
           {[...LEVELS].reverse().map((level) => (
-            <li key={level.id} className="flex items-baseline gap-4 px-4 py-3 text-sm">
-              <span className="w-20 shrink-0 tabular-nums text-neutral-400">
+            <li
+              key={level.id}
+              className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3 text-sm"
+            >
+              <span className="w-16 shrink-0 tabular-nums text-neutral-400">
                 {level.min}–{level.max}
               </span>
-              <span className="w-40 shrink-0 font-medium">{level.title}</span>
-              <span className="text-neutral-500">{level.oneLiner}</span>
+              <span className="font-medium sm:w-40 sm:shrink-0">{level.title}</span>
+              {/* min-w-0 防止长中文在窄屏 flex 里被压成一列一个字 */}
+              <span className="min-w-0 flex-1 text-neutral-500">{level.oneLiner}</span>
             </li>
           ))}
         </ul>
