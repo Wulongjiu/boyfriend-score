@@ -1,10 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterEach } from 'vitest';
 
 import {
   FUNNEL_EVENTS,
   isFunnelEvent,
   sanitizePayload,
 } from '../lib/analytics-events';
+import {
+  SQL_CREATE_TABLE,
+  SQL_INSERT,
+  buildInsertParams,
+  hasDatabase,
+  isEventRow,
+} from '../lib/analytics-store';
 
 /**
  * 埋点契约测试
@@ -126,5 +133,66 @@ describe('sanitizePayload · 安全边界', () => {
       Object.fromEntries(piiKeys.map((k) => [k, 'sensitive-value'])),
     );
     expect(out).toEqual({});
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* 存储层（SQL 与参数构造是纯函数，驱动可选）                            */
+/* ------------------------------------------------------------------ */
+
+describe('埋点存储层', () => {
+  afterEach(() => {
+    delete process.env.DATABASE_URL;
+  });
+
+  it('未配置 DATABASE_URL 时不认为有数据库', () => {
+    delete process.env.DATABASE_URL;
+    expect(hasDatabase()).toBe(false);
+  });
+
+  it('配置了 DATABASE_URL 时认为有数据库', () => {
+    process.env.DATABASE_URL = 'postgresql://user:pw@host/db';
+    expect(hasDatabase()).toBe(true);
+  });
+
+  it('插入语句使用参数占位符，不拼接任何用户输入', () => {
+    // 这是防注入的关键：SQL 文本里不能出现 1..5 之外的值
+    expect(SQL_INSERT).toContain('$1');
+    expect(SQL_INSERT).toContain('$5');
+    expect(SQL_INSERT).not.toMatch(/values\s*\(\s*'/i);
+    expect(SQL_INSERT).toContain('::jsonb');
+  });
+
+  it('建表语句是幂等的（if not exists）', () => {
+    expect(SQL_CREATE_TABLE).toContain('create table if not exists');
+  });
+
+  it('插入参数顺序与占位符一致，payload 序列化为 JSON', () => {
+    const args = buildInsertParams(
+      'view_result',
+      'sess12345678',
+      'abcdef0123456789',
+      { score: 72, archetypeId: 'cold_war' },
+      1700000000000,
+    );
+    expect(args).toHaveLength(5);
+    expect(args[0]).toBe('view_result');
+    expect(args[1]).toBe('sess12345678');
+    expect(args[2]).toBe('abcdef0123456789');
+    expect(typeof args[3]).toBe('string');
+    expect(JSON.parse(args[3] as string)).toEqual({ score: 72, archetypeId: 'cold_war' });
+    expect(args[4]).toBe(1700000000000);
+  });
+
+  it('visitorHash 可以为空（无 IP/UA 时）', () => {
+    const args = buildInsertParams('view_home', 'sess12345678', null, {}, 1);
+    expect(args[2]).toBeNull();
+  });
+
+  it('isEventRow 判定合法事件行', () => {
+    expect(isEventRow({ name: 'view_home', sessionId: 'abc' })).toBe(true);
+    expect(isEventRow({ name: 'view_home' })).toBe(false);
+    expect(isEventRow(null)).toBe(false);
+    expect(isEventRow('x')).toBe(false);
   });
 });

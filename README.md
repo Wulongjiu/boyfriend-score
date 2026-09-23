@@ -47,6 +47,51 @@ content/questions.ts             应用使用：选项顺序已打乱并固化
 **为什么必须固化而不是运行时打乱**：答案按展示位置（选项下标）存进 URL code，
 若运行时打乱而计分按源顺序读取，分数会整体错位。固化后全链路只有一套顺序。
 
+## 埋点（漏斗与题库优化依据）
+
+自建 `/api/track` 是**主通道**——主要流量来自小红书内置浏览器，该环境常拦截 GA4 等第三方脚本。
+
+| 事件 | 触发时机 | 关键字段 |
+|---|---|---|
+| `view_home` | 首页曝光 | source（utm_content） |
+| `start_quiz` | 点击开始 | source |
+| `answer_question` | 完成一题 | **questionId + durationMs**（找最难回答的题） |
+| `quiz_complete` | 答完最后一题 | answered |
+| `view_result` | 结果页曝光 | score / isCapped / archetypeId |
+| `save_card` | 生成分享卡片 | score / archetypeId（分享率分子） |
+| `copy_link` | 复制链接 | score |
+| `restart_quiz` | 重新开始 | — |
+
+**隐私约束（写代码时必须遵守）**：不存 IP 原文（只存 `IP+UA+盐` 的 SHA-256 前 16 位）；
+负载经过白名单净化，未声明的字段一律丢弃（`tests/analytics.test.ts` 用 22 个断言守住这条边界）；
+不采集答案内容，只记题号与耗时。
+
+### 看数据
+
+```bash
+# 方式一：从 Vercel 日志导出（需要 vercel login）
+vercel logs <deployment-url> --json > events.ndjson
+node scripts/analytics-report.mjs events.ndjson
+
+# 方式二：配好数据库后直接查（见下方）
+```
+
+报表输出：漏斗转化率、最难回答的 10 题、弃答分布、原型分布、分数分布、来源归因、每小时趋势。
+
+### 启用数据库（可选，但推荐）
+
+默认走结构化日志，**零配置可用**。日志的短板是只能回溯很短的窗口，
+要长期留存与跨天分析就需要数据库：
+
+1. 在 [Supabase](https://supabase.com) 或 [Neon](https://neon.tech) 建一个免费 Postgres 项目
+2. 在它的 SQL Editor 里执行 `supabase/migrations/0001_events.sql`
+3. 把连接串配到 Vercel：项目 → Settings → Environment Variables → `DATABASE_URL`
+   （同时建议加一个随机的 `RATE_LIMIT_SALT`）
+4. 装驱动：`npm i postgres`
+5. 重新部署
+
+未装驱动或未配连接串时，代码会自动跳过写库、只写日志，**不会报错、不会影响用户**。
+
 ## 目录结构
 
 ```

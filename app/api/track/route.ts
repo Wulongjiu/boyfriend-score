@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 
 import { isFunnelEvent, sanitizePayload } from '../../../lib/analytics-events';
 import type { EventPayload, FunnelEvent } from '../../../lib/analytics-events';
+import { persistEvent } from '../../../lib/analytics-store';
 
 /**
  * 埋点接收端点 POST /api/track
@@ -125,15 +126,23 @@ export async function POST(request: Request): Promise<Response> {
     received_at: new Date().toISOString(),
   };
 
-  // ── 主通道：结构化日志（Vercel 日志可直接检索/导出）────────────────
+  // ── 主通道 1：结构化日志（零配置，Vercel 日志可检索/导出）─────────
   // 前缀固定，便于 `vercel logs` 或脚本按行过滤
   console.log(`[track] ${JSON.stringify(row)}`);
 
-  // ── TODO(下一步)：配好 DATABASE_URL 后在此插入数据库 ────────────────
-  // 建表语句见 supabase/migrations/0001_events.sql
-  // 建议用参数化插入 + 失败只记日志（埋点绝不能影响用户请求）
+  // ── 主通道 2：数据库（配了 DATABASE_URL 才生效）───────────────────
+  // persistEvent 内部永不抛错：写库失败只记日志，绝不影响用户请求。
+  // 使用 waitUntil 之外的 fire-and-forget 会有实例被回收的风险，
+  // 因此这里 await——它只增加几毫秒，换来数据不丢。
+  const persisted = await persistEvent({
+    name: parsed.name,
+    sessionId: parsed.sessionId,
+    visitorHash: hash,
+    payload: parsed.payload,
+    clientTs: parsed.ts,
+  });
 
-  return NextResponse.json({ ok: true }, { status: 202 });
+  return NextResponse.json({ ok: true, persisted }, { status: 202 });
 }
 
 /** GET 用于健康检查（确认端点已部署） */
